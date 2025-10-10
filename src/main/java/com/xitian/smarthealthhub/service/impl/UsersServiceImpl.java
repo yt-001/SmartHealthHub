@@ -12,14 +12,23 @@ import com.xitian.smarthealthhub.domain.vo.UserVO;
 import com.xitian.smarthealthhub.mapper.UsersMapper;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements UsersService {
+public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements UsersService, UserDetailsService {
     @Override
     public PageBean<UserVO> page(PageParam<UserQuery> param) {
         // 创建分页对象
@@ -78,5 +87,21 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         
         // 构造并返回PageBean
         return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // 根据手机号查找用户
+        LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Users::getPhone, username);
+        Users user = this.getOne(queryWrapper);
+        
+        if (user == null) {
+            throw new UsernameNotFoundException("用户不存在");
+        }
+        
+        // 返回UserDetails对象
+        return new User(user.getPhone(), user.getPasswordHash(), 
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
     }
 }
