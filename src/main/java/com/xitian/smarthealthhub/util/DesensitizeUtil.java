@@ -1,4 +1,4 @@
-package com.xitian.smarthealthhub.utils;
+package com.xitian.smarthealthhub.util;
 
 public class DesensitizeUtil {
 

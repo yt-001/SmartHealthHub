@@ -89,12 +89,6 @@
             <artifactId>spring-data-commons</artifactId>
         </dependency>
 
-        <!-- Spring Session Redis for HttpOnly Cookie support -->
-        <dependency>
-            <groupId>org.springframework.session</groupId>
-            <artifactId>spring-session-data-redis</artifactId>
-        </dependency>
-
         <!-- Lettuce Redis client -->
         <dependency>
             <groupId>io.lettuce</groupId>
@@ -122,6 +116,17 @@
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
             <version>0.11.5</version>
+        </dependency>
+
+        <!-- Spring Data Redis for refresh token storage -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.session</groupId>
+            <artifactId>spring-session-core</artifactId>
         </dependency>
 
     </dependencies>

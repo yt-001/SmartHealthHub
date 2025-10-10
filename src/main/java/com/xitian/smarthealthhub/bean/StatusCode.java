@@ -19,6 +19,7 @@ public enum StatusCode {
     BAD_GATEWAY(502, "网关错误"),
     SERVICE_UNAVAILABLE(503, "服务不可用"),
     GATEWAY_TIMEOUT(504, "网关超时"),
+    SYSTEM_ERROR(505, "系统错误"),
 
     // 业务相关错误
     VALIDATION_ERROR(1001, "参数验证失败"),
@@ -34,7 +35,11 @@ public enum StatusCode {
 
     // 权限相关
     PERMISSION_DENIED(3001, "权限不足"),
-    ROLE_NOT_FOUND(3002, "角色不存在");
+    ROLE_NOT_FOUND(3002, "角色不存在"),
+    
+    // 认证相关
+    INVALID_TOKEN(4001, "无效的令牌"),
+    EXPIRED_TOKEN(4002, "令牌已过期");
 
     private final int code;
     private final String message;

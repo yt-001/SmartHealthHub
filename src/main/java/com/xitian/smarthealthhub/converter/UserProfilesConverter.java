@@ -1,9 +1,8 @@
 package com.xitian.smarthealthhub.converter;
 
 import com.xitian.smarthealthhub.domain.entity.UserProfiles;
-import com.xitian.smarthealthhub.domain.entity.Users;
 import com.xitian.smarthealthhub.domain.vo.UserProfilesVO;
-import com.xitian.smarthealthhub.utils.DesensitizeUtil;
+import com.xitian.smarthealthhub.util.DesensitizeUtil;
 
 public class UserProfilesConverter {
     /**

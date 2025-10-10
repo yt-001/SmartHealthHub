@@ -31,34 +31,20 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 ### 配置说明
 
 1. **Cookie配置类**: `com.xitian.smarthealthhub.config.CookieConfig`
-   - 设置Cookie名称为 `SMART_HEALTH_SESSION`
-   - 启用HttpOnly属性
    - 设置SameSite属性为 `Strict`
-   - Cookie路径设置为 `/`
 
-2. **Session配置类**: `com.xitian.smarthealthhub.config.SessionConfig`
-   - 启用Redis HTTP Session
-   - 设置Session超时时间为30分钟
-
-3. **Web安全配置类**: `com.xitian.smarthealthhub.config.WebSecurityConfig`
+2. **安全配置类**: `com.xitian.smarthealthhub.config.SecurityConfig`
    - 配置Spring Security安全策略
-   - 设置会话管理策略
-   - 配置登出时删除Cookie
+   - 设置无状态会话管理策略
 
-4. **依赖项**:
-   - spring-session-data-redis
+3. **依赖项**:
    - lettuce-core
    - spring-boot-starter-security
+   - jjwt-api (JWT库)
 
-5. **application.yml配置**:
+4. **application.yml配置**:
    ```yaml
    spring:
-     session:
-       store-type: redis
-       timeout: 1800s
-       redis:
-         namespace: smarthealth:session
-   
      data:
        redis:
          host: localhost
@@ -86,22 +72,21 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 - **HttpOnly**: Cookie无法通过JavaScript访问，防止XSS攻击
 - **Secure**: 在生产环境中应启用，确保Cookie只在HTTPS下传输
 - **SameSite**: 设置为Strict，防止CSRF攻击
-- **Redis存储**: Session存储在Redis中，支持分布式部署
+- **JWT令牌**: 无状态认证机制，支持访问令牌和刷新令牌
+- **Redis存储**: 刷新令牌存储在Redis中，支持分布式部署
 - **Spring Security**: 提供全面的安全保护，包括认证和授权
 
 ### 测试接口
 
-项目提供了用于测试Session功能的接口:
-
-1. 创建Session: `POST /session/create`
-2. 获取Session信息: `GET /session/info`
-3. 销毁Session: `DELETE /session/destroy`
-
-同时也提供了基于JWT的认证接口:
+项目提供了基于JWT的认证接口:
 
 1. 用户登录: `POST /auth/login`
 2. 刷新令牌: `POST /auth/refresh`
 3. 用户登出: `POST /auth/logout`
+
+以及测试用户创建接口:
+
+4. 创建测试用户: `POST /test/createUser`
 
 ## 部署说明
 

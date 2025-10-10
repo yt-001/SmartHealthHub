@@ -63,7 +63,7 @@ public class SecurityConfig {
             )
             // 配置授权规则
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/public/**", "/auth/**", "/session/**").permitAll() // 允许访问公共接口
+                .requestMatchers("/auth/login", "/auth/refresh", "/test/**").permitAll() // 允许访问公共接口
                 .anyRequest().authenticated() // 其他请求需要认证
             )
             // 禁用表单登录
