@@ -1,9 +1,12 @@
 package com.xitian.smarthealthhub.util;
 
+import com.xitian.smarthealthhub.service.UsersService;
+import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -47,11 +50,22 @@ public class JwtUtil {
     /**
      * 生成访问令牌
      * @param userDetails 用户信息
+     * @param role 用户角色
+     * @return 访问令牌
+     */
+    public String generateAccessToken(String userDetails, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role); // 在令牌中添加角色信息
+        return doGenerateToken(claims, userDetails, JWT_TOKEN_VALIDITY);
+    }
+    
+    /**
+     * 生成访问令牌（为了向后兼容）
+     * @param userDetails 用户信息
      * @return 访问令牌
      */
     public String generateAccessToken(String userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails, JWT_TOKEN_VALIDITY);
+        return generateAccessToken(userDetails, null);
     }
 
     /**
@@ -71,6 +85,15 @@ public class JwtUtil {
      */
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
+    }
+    
+    /**
+     * 从令牌中获取角色
+     * @param token 令牌
+     * @return 角色
+     */
+    public String getRoleFromToken(String token) {
+        return getClaimFromToken(token, claims -> claims.get("role", String.class));
     }
 
     /**

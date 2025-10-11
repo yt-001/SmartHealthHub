@@ -12,16 +12,15 @@ import com.xitian.smarthealthhub.domain.vo.UserVO;
 import com.xitian.smarthealthhub.mapper.UsersMapper;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,6 +28,10 @@ import java.util.stream.Collectors;
 
 @Service
 public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements UsersService, UserDetailsService {
+    
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
     @Override
     public PageBean<UserVO> page(PageParam<UserQuery> param) {
         // 创建分页对象
@@ -91,7 +94,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        // 根据手机号查找用户
+        // 直接查询数据库获取用户信息（主要用于登录认证过程）
         LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Users::getPhone, username);
         Users user = this.getOne(queryWrapper);
@@ -100,8 +103,44 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             throw new UsernameNotFoundException("用户不存在");
         }
         
-        // 返回UserDetails对象
-        return new User(user.getPhone(), user.getPasswordHash(), 
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+        // 检查用户状态，只有正常状态的用户才能登录
+        if (user.getStatus() != 0) {
+            throw new UsernameNotFoundException("用户账户状态异常");
+        }
+        
+        // 根据用户角色设置权限
+        String roleName = getRoleName(user.getRole());
+        return new User(user.getPhone(), user.getPasswordHash(), true, true, true, true,
+                Collections.singletonList(new SimpleGrantedAuthority(roleName)));
+    }
+    
+    @Override
+    public Users getUserByPhone(String phone) {
+        LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Users::getPhone, phone);
+        return this.getOne(queryWrapper);
+    }
+    
+    /**
+     * 清除用户权限缓存
+     * @param username 用户名
+     */
+    public void clearUserCache(String username) {
+        // 由于现在JWT中已包含角色信息，不再需要Redis缓存用户详情
+        // 此方法保留以确保与AuthController的兼容性
+    }
+    
+    /**
+     * 根据角色代码获取角色名称
+     * @param roleCode 角色代码
+     * @return 角色名称
+     */
+    private String getRoleName(Byte roleCode) {
+        return switch (roleCode) {
+            case 0 -> "ROLE_ADMIN";
+            case 1 -> "ROLE_DOCTOR";
+            case 2 -> "ROLE_USER";
+            default -> "ROLE_UNKNOWN";
+        };
     }
 }
