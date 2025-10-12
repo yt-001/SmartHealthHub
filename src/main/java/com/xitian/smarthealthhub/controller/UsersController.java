@@ -33,13 +33,4 @@ public class UsersController {
         UserVO vo = UserConverter.toVO(user);
         return ResultBean.success(vo);
     }
-
-    // 可在此处添加基本的CRUD方法
-    @PostMapping("/page")
-    public ResultBean<PageBean<UserVO>> page(@RequestBody PageParam<UserQuery> param) {
-        if ((param.getPageSize() > 200)) {
-            return ResultBean.fail(StatusCode.VALIDATION_ERROR, "每页条数不能超过 200 条");
-        }
-        return ResultBean.success(usersService.page(param));
-    }
 }

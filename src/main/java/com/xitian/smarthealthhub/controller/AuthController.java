@@ -3,7 +3,8 @@ package com.xitian.smarthealthhub.controller;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.domain.entity.Users;
-import com.xitian.smarthealthhub.domain.dto.LoginRequest;
+import com.xitian.smarthealthhub.domain.dto.LoginRequestDTO;
+import com.xitian.smarthealthhub.domain.dto.UserRegistrationDTO;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import com.xitian.smarthealthhub.util.JwtUtil;
@@ -14,9 +15,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,20 +42,33 @@ public class AuthController {
 
     @Autowired
     private RedisTemplate<String, Object> refreshTokenRedisTemplate;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    /**
+     * 用户注册接口
+     * @param userRegistrationDTO 用户注册信息
+     * @return 操作结果
+     */
+    @PostMapping("/register")
+    public ResultBean<String> register(@Valid @RequestBody UserRegistrationDTO userRegistrationDTO) {
+        return null;
+    }
 
     /**
      * 用户登录接口
-     * @param loginRequest 登录请求对象，包含手机号、密码和角色
+     * @param loginRequestDTO 登录请求对象，包含手机号、密码和角色
      * @param response HttpServletResponse对象，用于设置HttpOnly Cookie
      * @return 操作结果
      */
     @PostMapping("/login")
-    public ResultBean<Map<String, String>> login(@RequestBody LoginRequest loginRequest,
+    public ResultBean<Map<String, String>> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
                                                  HttpServletResponse response) {
         try {
-            String phone = loginRequest.getPhone();
-            String password = loginRequest.getPassword();
-            Byte role = loginRequest.getRole();
+            String phone = loginRequestDTO.getPhone();
+            String password = loginRequestDTO.getPassword();
+            Byte role = loginRequestDTO.getRole();
             
             // 1. 先从数据库获取用户信息，不进行认证
             Users user = usersService.getUserByPhone(phone);
