@@ -53,7 +53,64 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResultBean<String> register(@Valid @RequestBody UserRegistrationDTO userRegistrationDTO) {
-        return null;
+        try {
+            // 1. 检查密码和确认密码是否一致
+            if (!userRegistrationDTO.getPassword().equals(userRegistrationDTO.getConfirmPassword())) {
+                return ResultBean.fail(StatusCode.BAD_REQUEST, "两次输入的密码不一致");
+            }
+            
+            // 2. 检查角色是否有效
+            String roleStr = userRegistrationDTO.getRole();
+            Byte role = null;
+            if (roleStr != null && !roleStr.isEmpty()) {
+                try {
+                    int roleValue = Integer.parseInt(roleStr);
+                    if (roleValue >= 0 && roleValue <= 2) {
+                        role = (byte) roleValue;
+                    } else {
+                        return ResultBean.fail(StatusCode.BAD_REQUEST, "角色参数无效，仅支持 0(管理员)、1(医生)、2(患者)");
+                    }
+                } catch (NumberFormatException e) {
+                    return ResultBean.fail(StatusCode.BAD_REQUEST, "角色参数无效，仅支持 0(管理员)、1(医生)、2(患者)");
+                }
+            }
+            
+            // 3. 检查手机号是否已存在
+            Users existingUser = usersService.getUserByPhone(userRegistrationDTO.getPhone());
+            if (existingUser != null) {
+                return ResultBean.fail(StatusCode.USER_ALREADY_EXISTS, "该手机号已被注册");
+            }
+            
+            // 4. 创建新用户
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            // 对密码进行加密
+            String encodedPassword = passwordEncoder.encode(userRegistrationDTO.getPassword());
+            
+            Users newUser = Users.builder()
+                    .username(userRegistrationDTO.getUsername())
+                    .realName(userRegistrationDTO.getRealName())
+                    .phone(userRegistrationDTO.getPhone())
+                    .email(userRegistrationDTO.getEmail())
+                    .gender(userRegistrationDTO.getGender())
+                    .role(role != null ? role : (byte) 2) // 默认为患者角色
+                    .status((byte) 0) // 默认状态为正常
+                    .isDeleted((byte) 0) // 未删除
+                    .birthDate(userRegistrationDTO.getBirthDate())
+                    .passwordHash(encodedPassword)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+            
+            // 5. 保存用户到数据库
+            boolean saved = usersService.save(newUser);
+            if (saved) {
+                return ResultBean.success("注册成功");
+            } else {
+                return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "注册失败，请稍后重试");
+            }
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "注册过程中发生错误: " + e.getMessage());
+        }
     }
 
     /**

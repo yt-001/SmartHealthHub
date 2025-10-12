@@ -9,17 +9,15 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import lombok.*;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @TableName("users")
 public class Users implements Serializable {
 
@@ -29,7 +27,7 @@ public class Users implements Serializable {
     /**
      * 主键，雪花 ID，全局唯一
      */
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -109,5 +107,4 @@ public class Users implements Serializable {
      */
     @TableField("updated_at")
     private LocalDateTime updatedAt;
-
 }

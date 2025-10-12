@@ -41,7 +41,8 @@ public class UserRegistrationDTO {
     private String gender;
     
     @Schema(description = "角色: 0管理员 1医生 2患者")
-    private Byte role;
+    @Pattern(regexp = "^[012]$", message = "角色只能是0(管理员)、1(医生)或2(患者)")
+    private String role;
     
     @Schema(description = "邮箱")
     @Size(max = 64, message = "邮箱长度不能超过64个字符")

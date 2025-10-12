@@ -28,7 +28,7 @@ public class DoctorProfiles implements Serializable {
     /**
      * 主键，雪花 ID
      */
-    @TableId(value = "id", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.ASSIGN_ID)
     private Long id;
 
     /**

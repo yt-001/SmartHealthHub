@@ -32,14 +32,15 @@ public enum StatusCode {
     USER_DISABLED(2002, "用户已被禁用"),
     USERNAME_OR_PASSWORD_ERROR(2003, "用户名或密码错误"),
     USER_ALREADY_EXISTS(2004, "用户已存在"),
+    BAD_REQUEST( 2005, "请求参数错误" ),
 
     // 权限相关
     PERMISSION_DENIED(3001, "权限不足"),
     ROLE_NOT_FOUND(3002, "角色不存在"),
-    
+
     // 认证相关
     INVALID_TOKEN(4001, "无效的令牌"),
-    EXPIRED_TOKEN(4002, "令牌已过期");
+    EXPIRED_TOKEN(4002, "令牌已过期"),;
 
     private final int code;
     private final String message;
