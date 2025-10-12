@@ -3,7 +3,7 @@ package com.xitian.smarthealthhub.controller;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.domain.entity.Users;
-import com.xitian.smarthealthhub.dto.LoginRequest;
+import com.xitian.smarthealthhub.domain.dto.LoginRequest;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import com.xitian.smarthealthhub.util.JwtUtil;

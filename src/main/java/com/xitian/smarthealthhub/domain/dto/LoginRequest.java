@@ -1,4 +1,4 @@
-package com.xitian.smarthealthhub.dto;
+package com.xitian.smarthealthhub.domain.dto;
 
 import lombok.Data;
 

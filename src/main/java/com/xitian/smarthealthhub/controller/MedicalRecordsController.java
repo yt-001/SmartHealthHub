@@ -8,6 +8,8 @@ import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.converter.MedicalRecordsConverter;
 import com.xitian.smarthealthhub.domain.entity.MedicalRecords;
 import com.xitian.smarthealthhub.domain.vo.MedicalRecordsVO;
+import com.xitian.smarthealthhub.domain.query.MedicalRecordQuery;
+import com.xitian.smarthealthhub.domain.vo.MedicalRecordPageVO;
 import com.xitian.smarthealthhub.service.MedicalRecordsService;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
@@ -20,6 +22,19 @@ public class MedicalRecordsController {
 
     @Resource
     private MedicalRecordsService medicalRecordsService;
+
+    /**
+     * 分页获取病例历史归档信息
+     * @param param 分页参数
+     * @return 病例历史归档信息分页列表
+     */
+    @PostMapping("/page")
+    public ResultBean<PageBean<MedicalRecordPageVO>> page(@RequestBody PageParam<MedicalRecordQuery> param) {
+        if ((param.getPageSize() > 200)) {
+            return ResultBean.fail(StatusCode.VALIDATION_ERROR, "每页条数不能超过 200 条");
+        }
+        return ResultBean.success(medicalRecordsService.page(param));
+    }
 
     /**
      * 根据ID获取病例历史信息

@@ -53,7 +53,7 @@ public class TestController {
             user.setPasswordHash(passwordEncoder.encode(password)); // 使用BCrypt加密密码
             user.setUsername(username);
             user.setRealName(realName);
-            user.setRole((byte) 2); // 默认为患者角色
+            user.setRole((byte) 1); // 默认为患者角色
             user.setStatus((byte) 0); // 正常状态
             user.setGender("M"); // 默认性别
             user.setBirthDate(LocalDate.of(1990, 1, 1)); // 默认生日
