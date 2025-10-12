@@ -8,28 +8,26 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.xitian.smarthealthhub.bean.base.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @TableName("user_profiles")
-public class UserProfiles implements Serializable {
+public class UserProfiles extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键，雪花 ID
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Long id;
 
     /**
      * 关联 users.id，role=2
@@ -102,17 +100,5 @@ public class UserProfiles implements Serializable {
      */
     @TableField("emergency_phone")
     private String emergencyPhone;
-
-    /**
-     * 建档时间
-     */
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 最后更新
-     */
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 
 }

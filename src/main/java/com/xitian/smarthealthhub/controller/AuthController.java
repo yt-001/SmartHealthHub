@@ -1,11 +1,18 @@
 package com.xitian.smarthealthhub.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
+import com.xitian.smarthealthhub.domain.entity.UserProfiles;
 import com.xitian.smarthealthhub.domain.entity.Users;
+import com.xitian.smarthealthhub.domain.entity.DoctorProfiles;
 import com.xitian.smarthealthhub.domain.dto.LoginRequestDTO;
 import com.xitian.smarthealthhub.domain.dto.UserRegistrationDTO;
+import com.xitian.smarthealthhub.domain.dto.DoctorAuthenticationDTO;
+import com.xitian.smarthealthhub.domain.dto.PatientAuthenticationDTO;
 import com.xitian.smarthealthhub.service.UsersService;
+import com.xitian.smarthealthhub.service.DoctorProfilesService;
+import com.xitian.smarthealthhub.service.UserProfilesService;
 import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import com.xitian.smarthealthhub.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +45,12 @@ public class AuthController {
     private UsersService usersService;
 
     @Autowired
+    private DoctorProfilesService doctorProfilesService;
+    
+    @Autowired
+    private UserProfilesService userProfilesService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     @Autowired
@@ -59,32 +72,28 @@ public class AuthController {
                 return ResultBean.fail(StatusCode.BAD_REQUEST, "两次输入的密码不一致");
             }
             
-            // 2. 检查角色是否有效
-            String roleStr = userRegistrationDTO.getRole();
-            Byte role = null;
-            if (roleStr != null && !roleStr.isEmpty()) {
-                try {
-                    int roleValue = Integer.parseInt(roleStr);
-                    if (roleValue >= 0 && roleValue <= 2) {
-                        role = (byte) roleValue;
-                    } else {
-                        return ResultBean.fail(StatusCode.BAD_REQUEST, "角色参数无效，仅支持 0(管理员)、1(医生)、2(患者)");
-                    }
-                } catch (NumberFormatException e) {
-                    return ResultBean.fail(StatusCode.BAD_REQUEST, "角色参数无效，仅支持 0(管理员)、1(医生)、2(患者)");
-                }
-            }
-            
-            // 3. 检查手机号是否已存在
+            // 2. 检查手机号是否已存在
             Users existingUser = usersService.getUserByPhone(userRegistrationDTO.getPhone());
             if (existingUser != null) {
                 return ResultBean.fail(StatusCode.USER_ALREADY_EXISTS, "该手机号已被注册");
             }
             
-            // 4. 创建新用户
+            // 3. 创建新用户
             java.time.LocalDateTime now = java.time.LocalDateTime.now();
             // 对密码进行加密
             String encodedPassword = passwordEncoder.encode(userRegistrationDTO.getPassword());
+            
+            // 处理角色参数（已通过DTO验证确保是"0"、"1"或"2"）
+            String roleStr = userRegistrationDTO.getRole();
+            Byte role = null;
+            if (roleStr != null && !roleStr.isEmpty()) {
+                role = Byte.parseByte(roleStr);
+            }
+            
+            // 根据角色设置默认状态：
+            // 管理员(0)或医生(1)设置为未激活状态(2)
+            // 患者(2)设置为正常状态(0)
+            Byte status = (role != null && (role == 0 || role == 1)) ? (byte) 2 : (byte) 0;
             
             Users newUser = Users.builder()
                     .username(userRegistrationDTO.getUsername())
@@ -93,7 +102,7 @@ public class AuthController {
                     .email(userRegistrationDTO.getEmail())
                     .gender(userRegistrationDTO.getGender())
                     .role(role != null ? role : (byte) 2) // 默认为患者角色
-                    .status((byte) 0) // 默认状态为正常
+                    .status(status) // 根据角色设置状态
                     .isDeleted((byte) 0) // 未删除
                     .birthDate(userRegistrationDTO.getBirthDate())
                     .passwordHash(encodedPassword)
@@ -101,7 +110,7 @@ public class AuthController {
                     .updatedAt(now)
                     .build();
             
-            // 5. 保存用户到数据库
+            // 4. 保存用户到数据库
             boolean saved = usersService.save(newUser);
             if (saved) {
                 return ResultBean.success("注册成功");
@@ -275,6 +284,117 @@ public class AuthController {
         SecurityContextHolder.clearContext();
         
         return ResultBean.success("登出成功");
+    }
+    
+    /**
+     * 医生认证接口
+     * @param doctorAuthDTO 医生认证信息
+     * @return 操作结果
+     */
+    @PostMapping("/doctor-authenticate")
+    public ResultBean<String> doctorAuthenticate(@Valid @RequestBody DoctorAuthenticationDTO doctorAuthDTO) {
+        try {
+            // 1. 检查用户是否存在且为医生角色
+            Users user = usersService.getById(doctorAuthDTO.getUserId());
+            if (user == null) {
+                return ResultBean.fail(StatusCode.USER_NOT_FOUND, "用户不存在");
+            }
+            
+            if (user.getRole() != 1) { // 1 表示医生角色
+                return ResultBean.fail(StatusCode.BAD_REQUEST, "该用户不是医生角色");
+            }
+            
+            // 2. 检查是否已经存在医生档案
+            DoctorProfiles existingProfile = doctorProfilesService.getOne(
+                new LambdaQueryWrapper<DoctorProfiles>()
+                    .eq(DoctorProfiles::getUserId, doctorAuthDTO.getUserId())
+            );
+            
+            if (existingProfile != null) {
+                return ResultBean.fail(StatusCode.BAD_REQUEST, "该医生已存在认证信息");
+            }
+            
+            // 3. 创建医生档案
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            DoctorProfiles doctorProfile = DoctorProfiles.builder()
+                    .userId(doctorAuthDTO.getUserId())
+                    .deptId(doctorAuthDTO.getDeptId())
+                    .title(doctorAuthDTO.getTitle())
+                    .specialty(doctorAuthDTO.getSpecialty())
+                    .qualificationNo(doctorAuthDTO.getQualificationNo())
+                    .isDeleted((byte) 0) // 未删除
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+            
+            // 4. 保存医生档案到数据库
+            boolean saved = doctorProfilesService.save(doctorProfile);
+            if (saved) {
+                return ResultBean.success("医生认证信息提交成功，待审核通过");
+            } else {
+                return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "医生认证信息提交失败，请稍后重试");
+            }
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "医生认证过程中发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 患者认证接口
+     * @param patientAuthDTO 患者认证信息
+     * @return 操作结果
+     */
+    @PostMapping("/patient-authenticate")
+    public ResultBean<String> patientAuthenticate(@Valid @RequestBody PatientAuthenticationDTO patientAuthDTO) {
+        try {
+            // 1. 检查用户是否存在且为患者角色
+            Users user = usersService.getById(patientAuthDTO.getUserId());
+            if (user == null) {
+                return ResultBean.fail(StatusCode.USER_NOT_FOUND, "用户不存在");
+            }
+            
+            if (user.getRole() != 2) { // 2 表示患者角色
+                return ResultBean.fail(StatusCode.BAD_REQUEST, "该用户不是患者角色");
+            }
+            
+            // 2. 检查是否已经存在患者档案
+            LambdaQueryWrapper<UserProfiles> userProfilesQuery = new LambdaQueryWrapper<>();
+            userProfilesQuery.eq(UserProfiles::getUserId, patientAuthDTO.getUserId());
+            UserProfiles existingProfile = userProfilesService.getOne(userProfilesQuery);
+            
+            if (existingProfile != null) {
+                return ResultBean.fail(StatusCode.BAD_REQUEST, "该患者已存在认证信息");
+            }
+            
+            // 3. 创建患者档案
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            UserProfiles userProfile = UserProfiles.builder()
+                    .userId(patientAuthDTO.getUserId())
+                    .idCard(patientAuthDTO.getIdCard())
+                    .bloodType(patientAuthDTO.getBloodType())
+                    .allergyHistory(patientAuthDTO.getAllergyHistory())
+                    .chronicDisease(patientAuthDTO.getChronicDisease())
+                    .currentSymptoms(patientAuthDTO.getCurrentSymptoms())
+                    .currentPlan(patientAuthDTO.getCurrentPlan())
+                    .nextStep(patientAuthDTO.getNextStep())
+                    .address(patientAuthDTO.getAddress())
+                    .emergencyName(patientAuthDTO.getEmergencyName())
+                    .emergencyPhone(patientAuthDTO.getEmergencyPhone())
+                    .idCardVerified((byte) 2) // 设置为审核中状态
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .build();
+            
+            // 4. 保存患者档案到数据库
+            boolean saved = userProfilesService.save(userProfile);
+            if (saved) {
+                return ResultBean.success("患者认证信息提交成功");
+            } else {
+                return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "患者认证信息提交失败，请稍后重试");
+            }
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "患者认证过程中发生错误: " + e.getMessage());
+        }
     }
     
     /**

@@ -10,26 +10,21 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.xitian.smarthealthhub.bean.base.BaseEntity;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @TableName("users")
-public class Users implements Serializable {
+public class Users extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键，雪花 ID，全局唯一
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Long id;
-
     /**
      * 登录账号，业务唯一
      */
@@ -95,16 +90,4 @@ public class Users implements Serializable {
      */
     @TableField("is_deleted")
     private Byte isDeleted;
-
-    /**
-     * 创建时间
-     */
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 }

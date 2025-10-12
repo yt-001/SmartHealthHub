@@ -4,32 +4,29 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
-
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import com.xitian.smarthealthhub.bean.base.BaseEntity;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @TableName("doctor_profiles")
-public class DoctorProfiles implements Serializable {
+public class DoctorProfiles extends BaseEntity implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    /**
-     * 主键，雪花 ID
-     */
-    @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private Long id;
 
     /**
      * 关联 users.id，role=1
@@ -68,7 +65,7 @@ public class DoctorProfiles implements Serializable {
     private String bio;
 
     /**
-     * 门诊班次，如“周一上午 周三下午”
+     * 门诊班次，如"周一上午 周三下午"
      */
     @TableField("work_shift")
     private String workShift;
@@ -84,17 +81,5 @@ public class DoctorProfiles implements Serializable {
      */
     @TableField("is_deleted")
     private Byte isDeleted;
-
-    /**
-     * 建档时间
-     */
-    @TableField("created_at")
-    private LocalDateTime createdAt;
-
-    /**
-     * 更新时间
-     */
-    @TableField("updated_at")
-    private LocalDateTime updatedAt;
 
 }
