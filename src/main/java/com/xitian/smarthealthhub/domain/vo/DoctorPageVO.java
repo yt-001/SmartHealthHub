@@ -33,9 +33,6 @@ public class DoctorPageVO {
     @Schema(description = "科室ID")
     private Integer deptId;
 
-    @Schema(description = "擅长领域")
-    private String specialty;
-
     @Schema(description = "执业证书编号")
     private String qualificationNo;
 

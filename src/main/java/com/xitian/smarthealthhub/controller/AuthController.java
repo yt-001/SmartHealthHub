@@ -197,6 +197,56 @@ public class AuthController {
     }
 
     /**
+     * 检查用户状态接口，用于前端刷新页面时重新获取用户信息
+     * @param accessToken 从Cookie中获取的访问令牌
+     * @return 用户信息
+     */
+    @GetMapping("/check")
+    public ResultBean<Map<String, Object>> checkUserStatus(@CookieValue(name = "access_token", required = false) String accessToken) {
+        try {
+            // 检查访问令牌是否存在
+            if (accessToken == null || accessToken.isEmpty()) {
+                return ResultBean.fail(StatusCode.UNAUTHORIZED, "未找到访问令牌");
+            }
+
+            // 验证令牌有效性
+            if (!jwtUtil.validateToken(accessToken, jwtUtil.getUsernameFromToken(accessToken))) {
+                return ResultBean.fail(StatusCode.UNAUTHORIZED, "访问令牌无效或已过期");
+            }
+
+            // 从令牌中获取用户名（手机号）
+            String phone = jwtUtil.getUsernameFromToken(accessToken);
+
+            // 获取用户信息
+            Users user = usersService.getUserByPhone(phone);
+            if (user == null) {
+                return ResultBean.fail(StatusCode.UNAUTHORIZED, "用户不存在");
+            }
+
+            // 检查用户状态
+            if (user.getStatus() != 0) { // 0 表示正常状态
+                return ResultBean.fail(StatusCode.FORBIDDEN, "用户账户状态异常");
+            }
+
+            // 构造返回信息
+            Map<String, Object> userInfo = new HashMap<>();
+            userInfo.put("id", user.getId());
+            userInfo.put("username", user.getUsername());
+            userInfo.put("phone", user.getPhone());
+            userInfo.put("email", user.getEmail());
+            userInfo.put("realName", user.getRealName());
+            userInfo.put("gender", user.getGender());
+            userInfo.put("role", user.getRole());
+            userInfo.put("birthDate", user.getBirthDate());
+            userInfo.put("avatarUrl", user.getAvatarUrl());
+
+            return ResultBean.success(userInfo);
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "检查用户状态时发生错误: " + e.getMessage());
+        }
+    }
+
+    /**
      * 刷新访问令牌
      * @param response HttpServletResponse对象，用于设置新的HttpOnly Cookie
      * @return 操作结果
@@ -410,4 +460,5 @@ public class AuthController {
             default -> "ROLE_UNKNOWN";
         };
     }
+
 }

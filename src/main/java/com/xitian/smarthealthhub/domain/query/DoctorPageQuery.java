@@ -29,9 +29,6 @@ public class DoctorPageQuery extends BaseQuery {
     @Schema(description = "科室ID")
     private Integer deptId;
 
-    @Schema(description = "擅长领域")
-    private String specialty;
-
     @Schema(description = "账号状态: 0正常 1锁定 2未激活 3已注销")
     private Byte status;
 }

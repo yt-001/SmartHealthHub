@@ -77,9 +77,7 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
                 .collect(Collectors.toList());
 
         // 批量查询用户档案信息
-        LambdaQueryWrapper<UserProfiles> profileQueryWrapper = Wrappers.lambdaQuery();
-        profileQueryWrapper.in(UserProfiles::getUserId, userIds);
-        List<UserProfiles> profiles = this.list(profileQueryWrapper);
+        List<UserProfiles> profiles = userIds.isEmpty() ? List.of() : this.listByIds(userIds);
         
         // 构建用户ID到档案的映射
         java.util.Map<Long, UserProfiles> profileMap = profiles.stream()

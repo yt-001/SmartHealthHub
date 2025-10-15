@@ -18,13 +18,13 @@ spring:
           max-idle: 8
           min-idle: 0
           max-wait: -1ms
-  # HttpOnly Cookie configuration
   servlet:
     session:
       cookie:
         http-only: true
         secure: false
         same-site: strict
+        max-age: 18000
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

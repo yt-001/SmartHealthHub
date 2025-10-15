@@ -11,7 +11,6 @@ public class DoctorPageVOConverter {
         vo.setId(doctorProfiles.getId());
         vo.setDeptId(doctorProfiles.getDeptId());
         vo.setTitle(doctorProfiles.getTitle());
-        vo.setSpecialty(doctorProfiles.getSpecialty());
         vo.setQualificationNo(doctorProfiles.getQualificationNo());
         vo.setCreatedAt(doctorProfiles.getCreatedAt());
         
