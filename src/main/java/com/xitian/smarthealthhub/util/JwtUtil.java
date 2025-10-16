@@ -27,8 +27,9 @@ public class JwtUtil {
     // 刷新令牌有效期（30天）
     public static final long REFRESH_TOKEN_VALIDITY = 30 * 24 * 60 * 60;
 
-    // 密钥（实际项目中应该从配置文件读取）
-    private SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    // 密钥（使用固定密钥，避免每次重启后令牌失效）
+    private static final String SECRET = "smart_health_hub_secret_key_for_jwt_token_generation_and_validation";
+    private final SecretKey secretKey = Keys.hmacShaKeyFor(SECRET.getBytes());
 
     /**
      * 生成令牌
@@ -131,7 +132,7 @@ public class JwtUtil {
      * @param token 令牌
      * @return 是否过期
      */
-    private Boolean isTokenExpired(String token) {
+    public Boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
     }

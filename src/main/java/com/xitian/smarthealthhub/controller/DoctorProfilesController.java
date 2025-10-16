@@ -10,8 +10,11 @@ import com.xitian.smarthealthhub.service.DoctorProfilesService;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 
+/**
+ * 医生档案信息控制器
+ */
 @RestController
-@RequestMapping("/doctorProfiles")
+@RequestMapping("/doctor/profiles")
 public class DoctorProfilesController {
 
     @Resource
@@ -22,7 +25,7 @@ public class DoctorProfilesController {
      * @param userId 用户ID
      * @return 医生档案信息
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/{userId}")
     public ResultBean<DoctorProfilesVO> getDoctorProfileByUserId(@PathVariable Long userId) {
         LambdaQueryWrapper<DoctorProfiles> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DoctorProfiles::getUserId, userId);

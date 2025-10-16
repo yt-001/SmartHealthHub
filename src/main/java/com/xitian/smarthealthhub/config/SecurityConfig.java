@@ -14,6 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 /**
  * 安全配置类
@@ -49,6 +54,24 @@ public class SecurityConfig {
     }
 
     /**
+     * CORS配置源
+     * @return CorsConfigurationSource
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // 允许所有来源（生产环境中应指定具体域名）
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // 允许的HTTP方法
+        configuration.setAllowedHeaders(Arrays.asList("*")); // 允许所有请求头
+        configuration.setAllowCredentials(true); // 允许携带凭证（如Cookie）
+        configuration.setExposedHeaders(Arrays.asList("Authorization")); // 暴露Authorization响应头
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // 对所有路径应用CORS配置
+        return source;
+    }
+
+    /**
      * 配置安全过滤链
      * @param http HttpSecurity对象
      * @return SecurityFilterChain
@@ -57,8 +80,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 禁用CSRF保护（根据实际需求决定是否启用）
-            .csrf(AbstractHttpConfigurer::disable)
+            // 启用CSRF保护
+            .csrf(csrf -> csrf.disable()) // 当前仍禁用，如需启用请删除.disable()
+            // 配置CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // 配置会话管理
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // 使用无状态会话

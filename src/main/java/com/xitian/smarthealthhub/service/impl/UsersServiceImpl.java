@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.UserConverter;
+import com.xitian.smarthealthhub.domain.dto.UserUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.Users;
 import com.xitian.smarthealthhub.domain.query.UserQuery;
 import com.xitian.smarthealthhub.domain.vo.UserVO;
@@ -119,6 +120,35 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Users::getPhone, phone);
         return this.getOne(queryWrapper);
+    }
+    
+    @Override
+    public boolean updateUserInfo(UserUpdateDTO userUpdateDTO) {
+        // 根据ID查询用户
+        Users user = this.getById(userUpdateDTO.getId());
+        if (user == null) {
+            return false;
+        }
+        
+        // 只更新传递了的字段
+        if (userUpdateDTO.getRealName() != null) {
+            user.setRealName(userUpdateDTO.getRealName());
+        }
+        if (userUpdateDTO.getPhone() != null) {
+            user.setPhone(userUpdateDTO.getPhone());
+        }
+        if (userUpdateDTO.getEmail() != null) {
+            user.setEmail(userUpdateDTO.getEmail());
+        }
+        if (userUpdateDTO.getBirthDate() != null) {
+            user.setBirthDate(userUpdateDTO.getBirthDate());
+        }
+        if (userUpdateDTO.getGender() != null) {
+            user.setGender(userUpdateDTO.getGender());
+        }
+        
+        // 保存更新后的用户信息
+        return this.updateById(user);
     }
     
     /**

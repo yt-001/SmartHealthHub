@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 
 @RestController
-@RequestMapping("/userProfiles")
+@RequestMapping("/user/profiles")
 public class UserProfilesController {
 
     @Resource
@@ -22,7 +22,7 @@ public class UserProfilesController {
      * @param userId 用户ID
      * @return 用户档案信息
      */
-    @GetMapping("/user/{userId}")
+    @GetMapping("/{userId}")
     public ResultBean<UserProfilesVO> getUserProfileByUserId(@PathVariable Long userId) {
         LambdaQueryWrapper<UserProfiles> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserProfiles::getUserId, userId);

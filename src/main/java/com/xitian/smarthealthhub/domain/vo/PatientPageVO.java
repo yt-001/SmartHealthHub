@@ -37,12 +37,6 @@ public class PatientPageVO {
     @Schema(description = "血型")
     private String bloodType;
 
-    @Schema(description = "过敏史")
-    private String allergyHistory;
-
-    @Schema(description = "慢性病史")
-    private String chronicDisease;
-
     @Schema(description = "账号状态: 0正常 1锁定 2未激活 3已注销")
     private Byte status;
 

@@ -45,11 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.getUsernameFromToken(jwtToken);
                 
-                // 验证用户是否仍然拥有有效的刷新令牌（确保用户未登出）
-                String refreshKey = "refresh_token:" + username;
-                String storedRefreshToken = (String) refreshTokenRedisTemplate.opsForValue().get(refreshKey);
-                if (storedRefreshToken == null) {
-                    // 如果Redis中没有刷新令牌，说明用户已登出
+                // 验证访问令牌是否过期
+                if (jwtUtil.isTokenExpired(jwtToken)) {
                     username = null;
                 }
             } catch (Exception e) {
