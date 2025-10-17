@@ -16,8 +16,8 @@ public class MedicalRecordsConverter {
 
         // BaseVO 字段映射
         vo.setId(entity.getId());
-        vo.setCreateTime(entity.getCreatedAt());
-        vo.setUpdateTime(entity.getUpdatedAt());
+        vo.setCreatedAt(entity.getCreatedAt());
+        vo.setUpdatedAt(entity.getUpdatedAt());
 
         // MedicalRecordsVO 字段映射
         vo.setUserId(entity.getUserId());

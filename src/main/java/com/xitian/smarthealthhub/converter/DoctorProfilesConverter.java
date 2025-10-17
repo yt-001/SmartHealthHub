@@ -17,8 +17,8 @@ public class DoctorProfilesConverter {
 
         // 从 DoctorProfiles 实体映射字段到 DoctorProfilesVO
         vo.setId(profile.getId());
-        vo.setCreateTime(profile.getCreatedAt());
-        vo.setUpdateTime(profile.getUpdatedAt());
+        vo.setCreatedAt(profile.getCreatedAt());
+        vo.setUpdatedAt(profile.getUpdatedAt());
         vo.setDeptId(profile.getDeptId());
         vo.setTitle(profile.getTitle());
         vo.setSpecialty(profile.getSpecialty());

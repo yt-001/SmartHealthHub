@@ -17,8 +17,8 @@ public abstract class BaseQuery implements Serializable {
     private String keyword;
 
     @Schema(description = "创建时间，格式：yyyy-MM-dd")
-    private String createTime;
+    private String createdAt;
 
     @Schema(description = "更新时间")
-    private String updateTime;
+    private String updatedAt;
 }

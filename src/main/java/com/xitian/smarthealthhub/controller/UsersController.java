@@ -15,7 +15,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/user")
 public class UsersController {
 
     @Resource
@@ -41,7 +41,7 @@ public class UsersController {
      * @param userUpdateDTO 用户更新信息
      * @return 更新结果
      */
-    @PutMapping
+    @PutMapping("/updateProfile")
     public ResultBean<String> updateUser(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         // 调用服务层更新用户信息
         boolean updated = usersService.updateUserInfo(userUpdateDTO);

@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -92,8 +93,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/auth/login", "/auth/register", "/auth/doctor-authenticate", "/auth/patient-authenticate", "/auth/refresh", "/test/**").permitAll() // 允许访问公共接口
                 .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN") // 管理员接口仅允许管理员访问
-                .requestMatchers("/doctor/**").hasAuthority("ROLE_DOCTOR") // 医生接口仅允许医生访问
-                .requestMatchers("/user/**").hasAuthority("ROLE_USER") // 用户接口仅允许用户访问
+                .requestMatchers("/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 医生接口允许医生和管理员访问
+                .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN") // 用户接口允许用户和管理员访问
                 .anyRequest().authenticated() // 其他请求需要认证
             )
             // 禁用表单登录

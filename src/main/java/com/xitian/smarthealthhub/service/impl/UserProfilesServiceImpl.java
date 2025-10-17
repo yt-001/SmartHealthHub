@@ -10,7 +10,10 @@ import com.xitian.smarthealthhub.converter.PatientPageVOConverter;
 import com.xitian.smarthealthhub.domain.entity.UserProfiles;
 import com.xitian.smarthealthhub.domain.entity.Users;
 import com.xitian.smarthealthhub.domain.query.PatientPageQuery;
+import com.xitian.smarthealthhub.domain.query.PatientVerificationQuery;
 import com.xitian.smarthealthhub.domain.vo.PatientPageVO;
+import com.xitian.smarthealthhub.domain.vo.PatientVerificationVO;
+import com.xitian.smarthealthhub.converter.PatientVerificationVOConverter;
 import com.xitian.smarthealthhub.mapper.UserProfilesMapper;
 import com.xitian.smarthealthhub.service.UserProfilesService;
 import com.xitian.smarthealthhub.service.UsersService;
@@ -90,5 +93,73 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
 
         // 构造并返回PageBean
         return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    @Override
+    public PageBean<PatientVerificationVO> pagePendingPatients(PageParam<PatientVerificationQuery> param) {
+        // 创建分页对象
+        Page<UserProfiles> page = new Page<>(param.getPageNum(), param.getPageSize());
+
+        // 构建用户查询条件
+        LambdaQueryWrapper<UserProfiles> queryWrapper = Wrappers.lambdaQuery();
+        
+        // 只查询实名认证状态为审核中(2)的患者
+        queryWrapper.eq(UserProfiles::getIdCardVerified, (byte) 2);
+
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            PatientVerificationQuery patientQuery = param.getQuery();
+
+            // 真实姓名模糊查询
+            if (StringUtils.hasText(patientQuery.getRealName())) {
+                // 先查询匹配的用户ID
+                LambdaQueryWrapper<Users> userQueryWrapper = Wrappers.lambdaQuery();
+                userQueryWrapper.eq(Users::getRole, (byte) 2); // 患者角色
+                userQueryWrapper.like(Users::getRealName, patientQuery.getRealName());
+                List<Users> matchedUsers = usersService.list(userQueryWrapper);
+                List<Long> matchedUserIds = matchedUsers.stream()
+                        .map(Users::getId)
+                        .collect(Collectors.toList());
+                
+                if (matchedUserIds.isEmpty()) {
+                    // 如果没有匹配的用户，构造一个不可能的条件
+                    queryWrapper.eq(UserProfiles::getId, -1);
+                } else {
+                    // 查询这些用户对应的患者档案
+                    queryWrapper.in(UserProfiles::getUserId, matchedUserIds);
+                }
+            }
+
+            // 身份证号模糊查询
+            if (StringUtils.hasText(patientQuery.getIdCard())) {
+                queryWrapper.like(UserProfiles::getIdCard, patientQuery.getIdCard());
+            }
+        }
+        
+        // 执行分页查询
+        Page<UserProfiles> resultPage = this.page(page, queryWrapper);
+
+        // 获取用户ID列表
+        List<Long> userIds = resultPage.getRecords().stream()
+                .map(UserProfiles::getUserId)
+                .collect(Collectors.toList());
+
+        // 批量查询用户信息
+        List<Users> users = userIds.isEmpty() ? List.of() : usersService.listByIds(userIds);
+        
+        // 构建用户ID到用户的映射
+        java.util.Map<Long, Users> userMap = users.stream()
+                .collect(Collectors.toMap(Users::getId, user -> user));
+
+        // 转换为VO对象
+        List<PatientVerificationVO> voList = resultPage.getRecords().stream()
+                .map(profile -> {
+                    Users user = userMap.get(profile.getUserId());
+                    return PatientVerificationVOConverter.toVO(user, profile);
+                })
+                .collect(Collectors.toList());
+
+        // 构造并返回PageBean
+        return PageBean.of(voList, voList.size(), param);
     }
 }

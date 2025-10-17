@@ -17,8 +17,8 @@ public class UserConverter {
 
         // BaseVO 字段映射
         vo.setId(entity.getId());
-        vo.setCreateTime(entity.getCreatedAt());
-        vo.setUpdateTime(entity.getUpdatedAt());
+        vo.setCreatedAt(entity.getCreatedAt());
+        vo.setUpdatedAt(entity.getUpdatedAt());
 
         // UserVO 字段映射
         vo.setUsername(entity.getUsername());

@@ -372,6 +372,7 @@ public class AuthController {
                     .title(doctorAuthDTO.getTitle())
                     .specialty(doctorAuthDTO.getSpecialty())
                     .qualificationNo(doctorAuthDTO.getQualificationNo())
+                    .qualificationVerified((byte) 2) // 设置为审核中状态
                     .isDeleted((byte) 0) // 未删除
                     .createdAt(now)
                     .updatedAt(now)

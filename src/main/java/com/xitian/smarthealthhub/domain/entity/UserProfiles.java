@@ -84,7 +84,7 @@ public class UserProfiles extends BaseEntity implements Serializable {
     private String address;
 
     /**
-     * 实名认证状态 0 未 1 已通过 2 审核中（医疗必填）
+     * 实名认证状态 0 未通过 1 已通过 2 审核中（医疗必填）
      */
     @TableField("id_card_verified")
     private Byte idCardVerified;

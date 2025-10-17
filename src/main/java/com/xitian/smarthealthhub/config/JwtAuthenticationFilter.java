@@ -1,5 +1,7 @@
 package com.xitian.smarthealthhub.config;
 
+import com.xitian.smarthealthhub.domain.entity.Users;
+import com.xitian.smarthealthhub.service.UsersService;
 import com.xitian.smarthealthhub.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -67,10 +69,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             if (userDetails != null && jwtUtil.validateToken(jwtToken, username)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                // 验证用户状态是否正常
+                com.xitian.smarthealthhub.domain.entity.Users user = 
+                    ((com.xitian.smarthealthhub.service.UsersService) userDetailsService).getUserByPhone(username);
+                if (user != null && user.getStatus() == 0) { // 0 表示正常状态
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
         }
         

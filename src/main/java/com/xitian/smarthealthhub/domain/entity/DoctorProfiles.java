@@ -77,6 +77,12 @@ public class DoctorProfiles extends BaseEntity implements Serializable {
     private String officeRoom;
 
     /**
+     * 资质认证状态 0 未通过 1 已通过 2 审核中
+     */
+    @TableField("qualification_verified")
+    private Byte qualificationVerified;
+
+    /**
      * 逻辑删除
      */
     @TableField("is_deleted")

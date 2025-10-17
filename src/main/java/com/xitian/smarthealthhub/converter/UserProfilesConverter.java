@@ -17,8 +17,8 @@ public class UserProfilesConverter {
 
         // 从 UserProfiles 实体映射字段
         vo.setId(profile.getId());
-        vo.setCreateTime(profile.getCreatedAt());
-        vo.setUpdateTime(profile.getUpdatedAt());
+        vo.setCreatedAt(profile.getCreatedAt());
+        vo.setUpdatedAt(profile.getUpdatedAt());
         vo.setBloodType(profile.getBloodType());
         vo.setAllergyHistory(profile.getAllergyHistory());
         vo.setChronicDisease(profile.getChronicDisease());

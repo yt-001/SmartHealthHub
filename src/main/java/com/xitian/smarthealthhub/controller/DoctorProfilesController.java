@@ -7,6 +7,7 @@ import com.xitian.smarthealthhub.converter.DoctorProfilesConverter;
 import com.xitian.smarthealthhub.domain.entity.DoctorProfiles;
 import com.xitian.smarthealthhub.domain.vo.DoctorProfilesVO;
 import com.xitian.smarthealthhub.service.DoctorProfilesService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 
