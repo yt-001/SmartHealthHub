@@ -14,6 +14,9 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.PropertyAccessor.FIELD;
+
 @Configuration
 public class JacksonConfig {
 
@@ -46,6 +49,9 @@ public class JacksonConfig {
 
             // 7. 时区统一 GMT+8
             builder.timeZone("GMT+8");
+            
+            // 8. 配置字段可见性，支持字段的序列化和反序列化
+            builder.visibility(FIELD, ANY);
         };
     }
 }

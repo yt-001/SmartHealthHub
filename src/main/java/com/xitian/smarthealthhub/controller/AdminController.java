@@ -42,7 +42,7 @@ public class AdminController {
      */
     @PostMapping("/doctors/page")
     public ResultBean<PageBean<DoctorPageVO>> pageDoctors(@RequestBody PageParam<DoctorPageQuery> param) {
-        if ((param.getPageSize() > 200)) {
+       if ((param.getPageSize() > 200)) {
             return ResultBean.fail(StatusCode.VALIDATION_ERROR, "每页条数不能超过 200 条");
         }
         return ResultBean.success(doctorProfilesService.page(param));

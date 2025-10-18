@@ -1,13 +1,10 @@
 package com.xitian.smarthealthhub.controller;
 
-import com.xitian.smarthealthhub.bean.PageBean;
-import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.converter.UserConverter;
 import com.xitian.smarthealthhub.domain.dto.UserUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.Users;
-import com.xitian.smarthealthhub.domain.query.UserQuery;
 import com.xitian.smarthealthhub.domain.vo.UserVO;
 import com.xitian.smarthealthhub.service.UsersService;
 import org.springframework.web.bind.annotation.*;

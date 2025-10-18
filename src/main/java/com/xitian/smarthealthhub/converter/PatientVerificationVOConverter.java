@@ -17,10 +17,10 @@ public class PatientVerificationVOConverter {
         PatientVerificationVO vo = new PatientVerificationVO();
 
         // 从 Users 实体映射字段到 PatientVerificationVO
-        vo.setId(user.getId());
+        vo.setId(profile.getId());
         vo.setRealName(user.getRealName());
         vo.setPhone(DesensitizeUtil.phone(user.getPhone()));
-        vo.setCreatedAt(user.getCreatedAt());
+        vo.setCreatedAt(profile.getCreatedAt());
 
         // 从 UserProfiles 实体映射字段到 PatientVerificationVO（如果存在）
         if (profile != null) {

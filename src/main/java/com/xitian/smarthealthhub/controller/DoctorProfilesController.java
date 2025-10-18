@@ -26,11 +26,26 @@ public class DoctorProfilesController {
      * @param userId 用户ID
      * @return 医生档案信息
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResultBean<DoctorProfilesVO> getDoctorProfileByUserId(@PathVariable Long userId) {
         LambdaQueryWrapper<DoctorProfiles> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DoctorProfiles::getUserId, userId);
         DoctorProfiles doctorProfiles = doctorProfilesService.getOne(queryWrapper);
+        if (doctorProfiles == null) {
+            return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
+        }
+        DoctorProfilesVO vo = DoctorProfilesConverter.toVO(doctorProfiles);
+        return ResultBean.success(vo);
+    }
+
+    /**
+     * 根据ID获取医生档案信息
+     * @param id ID
+     * @return 医生档案信息
+     */
+    @GetMapping("/{id}")
+    public ResultBean<DoctorProfilesVO> getDoctorProfileById(@PathVariable Long id) {
+        DoctorProfiles doctorProfiles = doctorProfilesService.getById(id);
         if (doctorProfiles == null) {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
         }

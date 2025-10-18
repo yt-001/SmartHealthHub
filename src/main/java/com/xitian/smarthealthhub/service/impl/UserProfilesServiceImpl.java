@@ -45,11 +45,6 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
         if (param.getQuery() != null) {
             PatientPageQuery patientPageQuery = param.getQuery();
 
-            // 用户名模糊查询
-            if (StringUtils.hasText(patientPageQuery.getUsername())) {
-                queryWrapper.like(Users::getUsername, patientPageQuery.getUsername());
-            }
-
             // 真实姓名模糊查询
             if (StringUtils.hasText(patientPageQuery.getRealName())) {
                 queryWrapper.like(Users::getRealName, patientPageQuery.getRealName());
@@ -60,6 +55,25 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
                 queryWrapper.like(Users::getPhone, patientPageQuery.getPhone());
             }
 
+            // 身份证号模糊查询
+            if (StringUtils.hasText(patientPageQuery.getIdCard())) {
+                // 先查询匹配的用户档案ID
+                LambdaQueryWrapper<UserProfiles> profileQueryWrapper = Wrappers.lambdaQuery();
+                profileQueryWrapper.like(UserProfiles::getIdCard, patientPageQuery.getIdCard());
+                List<UserProfiles> matchedProfiles = this.list(profileQueryWrapper);
+                List<Long> matchedUserIds = matchedProfiles.stream()
+                        .map(UserProfiles::getUserId)
+                        .collect(Collectors.toList());
+                
+                if (matchedUserIds.isEmpty()) {
+                    // 如果没有匹配的用户档案，构造一个不可能的条件
+                    queryWrapper.eq(Users::getId, -1);
+                } else {
+                    // 查询这些用户
+                    queryWrapper.in(Users::getId, matchedUserIds);
+                }
+            }
+
             // 性别精确查询
             if (StringUtils.hasText(patientPageQuery.getGender())) {
                 queryWrapper.eq(Users::getGender, patientPageQuery.getGender());
@@ -68,6 +82,16 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
             // 账号状态精确查询
             if (patientPageQuery.getStatus() != null) {
                 queryWrapper.eq(Users::getStatus, patientPageQuery.getStatus());
+            }
+
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(patientPageQuery.getCreatedStart()) || StringUtils.hasText(patientPageQuery.getCreatedEnd())) {
+                if (StringUtils.hasText(patientPageQuery.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", patientPageQuery.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(patientPageQuery.getCreatedEnd())) {
+                    queryWrapper.apply("created_at < {0}", patientPageQuery.getCreatedEnd() + " 23:59:59");
+                }
             }
         }
 
@@ -80,7 +104,7 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
                 .collect(Collectors.toList());
 
         // 批量查询用户档案信息
-        List<UserProfiles> profiles = userIds.isEmpty() ? List.of() : this.listByIds(userIds);
+        List<UserProfiles> profiles = userIds.isEmpty() ? List.of() : this.list(new LambdaQueryWrapper<UserProfiles>().in(UserProfiles::getUserId, userIds));
         
         // 构建用户ID到档案的映射
         java.util.Map<Long, UserProfiles> profileMap = profiles.stream()
@@ -91,7 +115,7 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
                 .map(user -> PatientPageVOConverter.toPageVO(user, profileMap.get(user.getId())))
                 .collect(Collectors.toList());
 
-        // 构造并返回PageBean
+        // 构造并返回PageBean，使用数据库查询返回的总记录数
         return PageBean.of(voList, resultPage.getTotal(), param);
     }
     
@@ -134,6 +158,16 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
             if (StringUtils.hasText(patientQuery.getIdCard())) {
                 queryWrapper.like(UserProfiles::getIdCard, patientQuery.getIdCard());
             }
+
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(patientQuery.getCreatedStart()) || StringUtils.hasText(patientQuery.getCreatedEnd())) {
+                if (StringUtils.hasText(patientQuery.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", patientQuery.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(patientQuery.getCreatedEnd())) {
+                    queryWrapper.apply("created_at < {0}", patientQuery.getCreatedEnd() + " 23:59:59");
+                }
+            }
         }
         
         // 执行分页查询
@@ -159,7 +193,8 @@ public class UserProfilesServiceImpl extends ServiceImpl<UserProfilesMapper, Use
                 })
                 .collect(Collectors.toList());
 
-        // 构造并返回PageBean
-        return PageBean.of(voList, voList.size(), param);
+        // 构造并返回PageBean，使用数据库查询返回的总记录数
+        return PageBean.of(voList, resultPage.getTotal(), param);
+
     }
 }

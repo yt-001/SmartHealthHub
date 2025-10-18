@@ -73,11 +73,54 @@ public class DoctorProfilesServiceImpl extends ServiceImpl<DoctorProfilesMapper,
                 queryWrapper.eq(DoctorProfiles::getDeptId, doctorQuery.getDeptId());
             }
             
+            // 账号状态精确查询
+            if (doctorQuery.getStatus() != null) {
+                // 先查询匹配的用户ID
+                LambdaQueryWrapper<Users> userQueryWrapper = Wrappers.lambdaQuery();
+                userQueryWrapper.eq(Users::getRole, (byte) 1); // 医生角色
+                userQueryWrapper.eq(Users::getStatus, doctorQuery.getStatus());
+                List<Users> matchedUsers = usersMapper.selectList(userQueryWrapper);
+                List<Long> matchedUserIds = matchedUsers.stream()
+                        .map(Users::getId)
+                        .collect(Collectors.toList());
+                
+                if (matchedUserIds.isEmpty()) {
+                    // 如果没有匹配的用户，构造一个不可能的条件
+                    queryWrapper.eq(DoctorProfiles::getId, -1);
+                } else {
+                    // 查询这些用户对应的医生档案
+                    queryWrapper.in(DoctorProfiles::getUserId, matchedUserIds);
+                }
+            }
+            
+            // 手机号模糊查询
+            if (StringUtils.hasText(doctorQuery.getPhone())) {
+                // 先查询匹配的用户ID
+                LambdaQueryWrapper<Users> userQueryWrapper = Wrappers.lambdaQuery();
+                userQueryWrapper.eq(Users::getRole, (byte) 1); // 医生角色
+                userQueryWrapper.like(Users::getPhone, doctorQuery.getPhone());
+                List<Users> matchedUsers = usersMapper.selectList(userQueryWrapper);
+                List<Long> matchedUserIds = matchedUsers.stream()
+                        .map(Users::getId)
+                        .collect(Collectors.toList());
+                
+                if (matchedUserIds.isEmpty()) {
+                    // 如果没有匹配的用户，构造一个不可能的条件
+                    queryWrapper.eq(DoctorProfiles::getId, -1);
+                } else {
+                    // 查询这些用户对应的医生档案
+                    queryWrapper.in(DoctorProfiles::getUserId, matchedUserIds);
+                }
+            }
+            
             // 时间范围查询 - 创建时间
-            if (StringUtils.hasText(doctorQuery.getCreatedAt())) {
-                // 假设createTime格式为yyyy-MM-dd
-                String createTime = doctorQuery.getCreatedAt();
-                queryWrapper.apply("DATE(created_at) = {0}", createTime);
+            if (StringUtils.hasText(doctorQuery.getCreatedStart()) || StringUtils.hasText(doctorQuery.getCreatedEnd())) {
+                if (StringUtils.hasText(doctorQuery.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", doctorQuery.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(doctorQuery.getCreatedEnd())) {
+                    queryWrapper.apply("created_at < {0}", doctorQuery.getCreatedEnd() + " 23:59:59");
+                }
             }
         }
         
@@ -126,8 +169,8 @@ public class DoctorProfilesServiceImpl extends ServiceImpl<DoctorProfilesMapper,
             }
         }
         
-        // 构造并返回PageBean
-        return PageBean.of(voList, voList.size(), param);
+        // 构造并返回PageBean，使用数据库查询返回的总记录数
+        return PageBean.of(voList, resultPage.getTotal(), param);
     }
     
     @Override
@@ -167,6 +210,16 @@ public class DoctorProfilesServiceImpl extends ServiceImpl<DoctorProfilesMapper,
             // 医师执业证号模糊查询
             if (StringUtils.hasText(doctorQuery.getQualificationNo())) {
                 queryWrapper.like(DoctorProfiles::getQualificationNo, doctorQuery.getQualificationNo());
+            }
+
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(doctorQuery.getCreatedStart()) || StringUtils.hasText(doctorQuery.getCreatedEnd())) {
+                if (StringUtils.hasText(doctorQuery.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", doctorQuery.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(doctorQuery.getCreatedEnd())) {
+                    queryWrapper.apply("created_at < {0}", doctorQuery.getCreatedEnd() + " 23:59:59");
+                }
             }
         }
         

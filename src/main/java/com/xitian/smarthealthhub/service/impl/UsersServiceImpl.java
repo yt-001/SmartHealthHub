@@ -65,11 +65,6 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
                 queryWrapper.like(Users::getPhone, userQuery.getPhone());
             }
             
-            // 邮箱模糊查询
-            if (StringUtils.hasText(userQuery.getEmail())) {
-                queryWrapper.like(Users::getEmail, userQuery.getEmail());
-            }
-            
             // 性别精确查询
             if (StringUtils.hasText(userQuery.getGender())) {
                 queryWrapper.eq(Users::getGender, userQuery.getGender());
@@ -79,6 +74,17 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
             if (userQuery.getStatus() != null) {
                 queryWrapper.eq(Users::getStatus, userQuery.getStatus());
             }
+            
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(userQuery.getCreatedStart()) || StringUtils.hasText(userQuery.getCreatedEnd())) {
+                if (StringUtils.hasText(userQuery.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", userQuery.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(userQuery.getCreatedEnd())) {
+                    queryWrapper.apply("created_at < {0}", userQuery.getCreatedEnd() + " 23:59:59");
+                }
+            }
+
         }
         
         // 执行分页查询
@@ -89,7 +95,7 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
                 .map(UserConverter::toVO)
                 .collect(Collectors.toList());
         
-        // 构造并返回PageBean
+        // 构造并返回PageBean，使用数据库查询返回的总记录数
         return PageBean.of(voList, resultPage.getTotal(), param);
     }
 

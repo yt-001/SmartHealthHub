@@ -23,11 +23,26 @@ public class UserProfilesController {
      * @param userId 用户ID
      * @return 用户档案信息
      */
-    @GetMapping("/{userId}")
+    @GetMapping("/user/{userId}")
     public ResultBean<UserProfilesVO> getUserProfileByUserId(@PathVariable Long userId) {
         LambdaQueryWrapper<UserProfiles> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(UserProfiles::getUserId, userId);
         UserProfiles userProfiles = userProfilesService.getOne(queryWrapper);
+        if (userProfiles == null) {
+            return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
+        }
+        UserProfilesVO vo = UserProfilesConverter.toVO(userProfiles);
+        return ResultBean.success(vo);
+    }
+
+    /**
+     * 根据ID获取用户档案信息
+     * @param id ID
+     * @return 用户档案信息
+     */
+    @GetMapping("/{id}")
+    public ResultBean<UserProfilesVO> getUserProfileById(@PathVariable Long id) {
+        UserProfiles userProfiles = userProfilesService.getById(id);
         if (userProfiles == null) {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
         }

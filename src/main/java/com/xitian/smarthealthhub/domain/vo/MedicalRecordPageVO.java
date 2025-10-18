@@ -32,4 +32,7 @@ public class MedicalRecordPageVO {
 
     @Schema(description = "状态：0 治疗中 1 已完成 2 已归档")
     private Byte status;
+
+    @Schema(description = "创建时间")
+    private LocalDateTime createdAt;
 }

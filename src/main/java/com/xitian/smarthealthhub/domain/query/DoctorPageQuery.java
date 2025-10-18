@@ -1,6 +1,5 @@
 package com.xitian.smarthealthhub.domain.query;
 
-import com.xitian.smarthealthhub.bean.base.BaseQuery;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,18 +9,12 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class DoctorPageQuery extends BaseQuery {
-    @Schema(description = "用户名/登录账号")
-    private String username;
-
+public class DoctorPageQuery {
     @Schema(description = "真实姓名")
     private String realName;
 
     @Schema(description = "手机号")
     private String phone;
-
-    @Schema(description = "邮箱")
-    private String email;
 
     @Schema(description = "职称")
     private String title;
@@ -31,4 +24,11 @@ public class DoctorPageQuery extends BaseQuery {
 
     @Schema(description = "账号状态: 0正常 1锁定 2未激活 3已注销")
     private Byte status;
+    
+    // 时间范围查询字段
+    @Schema(description = "创建时间起始，格式：yyyy-MM-dd")
+    private String createdStart;
+    
+    @Schema(description = "创建时间结束，格式：yyyy-MM-dd")
+    private String createdEnd;
 }

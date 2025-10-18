@@ -105,7 +105,7 @@ public class VerificationController {
                 usersService.update(userUpdateWrapper);
             }
             
-            return ResultBean.success(status == 1 ? "医生资质审核通过" : "医生资质审核拒绝");
+                return ResultBean.success(status == 1 ? "医生资质审核通过" : "医生资质审核拒绝");
         } else {
             return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "审核操作失败");
         }
