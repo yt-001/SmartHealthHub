@@ -91,7 +91,7 @@ public class SecurityConfig {
             )
             // 配置授权规则
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/auth/login", "/auth/register", "/auth/doctor-authenticate", "/auth/patient-authenticate", "/auth/refresh", "/test/**").permitAll() // 允许访问公共接口
+                .requestMatchers("/auth/login", "/auth/register", "/auth/doctor-authenticate", "/auth/patient-authenticate", "/auth/refresh").permitAll() // 允许访问公共接口
                 .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN") // 管理员接口仅允许管理员访问
                 .requestMatchers("/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 医生接口允许医生和管理员访问
                 .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN") // 用户接口允许用户和管理员访问

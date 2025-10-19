@@ -72,11 +72,22 @@ public class JwtUtil {
     /**
      * 生成刷新令牌
      * @param userDetails 用户信息
+     * @param role 用户角色
+     * @return 刷新令牌
+     */
+    public String generateRefreshToken(String userDetails, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role); // 在刷新令牌中也添加角色信息
+        return doGenerateToken(claims, userDetails, REFRESH_TOKEN_VALIDITY);
+    }
+    
+    /**
+     * 生成刷新令牌（为了向后兼容）
+     * @param userDetails 用户信息
      * @return 刷新令牌
      */
     public String generateRefreshToken(String userDetails) {
-        Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails, REFRESH_TOKEN_VALIDITY);
+        return generateRefreshToken(userDetails, null);
     }
 
     /**
@@ -104,6 +115,16 @@ public class JwtUtil {
      */
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
+    }
+
+    /**
+     * 获取令牌剩余有效时间（毫秒）
+     * @param token 令牌
+     * @return 剩余有效时间（毫秒）
+     */
+    public long getRemainingTimeFromToken(String token) {
+        Date expiration = getExpirationDateFromToken(token);
+        return expiration.getTime() - System.currentTimeMillis();
     }
 
     /**

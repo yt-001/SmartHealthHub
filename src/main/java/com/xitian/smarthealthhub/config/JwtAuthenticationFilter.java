@@ -39,20 +39,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        
-        String username = null;
-        String jwtToken = extractTokenFromCookie(request, "access_token");
 
-        if (jwtToken != null) {
+        String username = null;
+        String refreshToken = extractTokenFromCookie(request, "refresh_token");
+
+        // 直接从刷新令牌获取用户名（如果存在）
+        if (refreshToken != null) {
             try {
-                username = jwtUtil.getUsernameFromToken(jwtToken);
+                // 从刷新令牌中获取用户名
+                username = jwtUtil.getUsernameFromToken(refreshToken);
                 
-                // 验证访问令牌是否过期
-                if (jwtUtil.isTokenExpired(jwtToken)) {
+                // 检查Redis中是否存在有效的刷新令牌
+                String refreshKey = "refresh_token:" + username;
+                String storedRefreshToken = (String) refreshTokenRedisTemplate.opsForValue().get(refreshKey);
+                
+                // 验证刷新令牌是否有效
+                if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken) 
+                    || !jwtUtil.validateToken(refreshToken, username)) {
                     username = null;
                 }
             } catch (Exception e) {
-                logger.warn("无法解析JWT令牌: " + e.getMessage());
+                logger.warn("无法解析刷新令牌: " + e.getMessage());
+                username = null;
             }
         }
 
@@ -60,15 +68,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = null;
             
-            // 从JWT中获取角色信息
-            String role = jwtUtil.getRoleFromToken(jwtToken);
+            // 从刷新令牌中获取角色信息
+            String role = null;
+            if (refreshToken != null) {
+                try {
+                    role = jwtUtil.getRoleFromToken(refreshToken);
+                } catch (Exception e) {
+                    logger.warn("无法从刷新令牌中获取角色信息: " + e.getMessage());
+                }
+            }
+            
+            // 如果刷新令牌中没有角色信息，说明令牌有问题，不进行认证
             if (role != null && !role.isEmpty()) {
-                // 如果JWT中有角色信息，直接构建UserDetails对象，避免查询数据库
+                // 构建UserDetails对象
                 userDetails = new User(username, "", true, true, true, true,
                         Collections.singletonList(new SimpleGrantedAuthority(role)));
             }
 
-            if (userDetails != null && jwtUtil.validateToken(jwtToken, username)) {
+            if (userDetails != null) {
                 // 验证用户状态是否正常
                 com.xitian.smarthealthhub.domain.entity.Users user = 
                     ((com.xitian.smarthealthhub.service.UsersService) userDetailsService).getUserByPhone(username);

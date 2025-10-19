@@ -15,6 +15,7 @@ import com.xitian.smarthealthhub.service.DoctorProfilesService;
 import com.xitian.smarthealthhub.service.UserProfilesService;
 import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import com.xitian.smarthealthhub.util.JwtUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 认证控制器，处理登录和令牌刷新
  */
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -129,7 +131,7 @@ public class AuthController {
      * @return 操作结果
      */
     @PostMapping("/login")
-    public ResultBean<Map<String, String>> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
+    public ResultBean<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
                                                  HttpServletResponse response) {
         try {
             String phone = loginRequestDTO.getPhone();
@@ -165,25 +167,35 @@ public class AuthController {
             String userRole = getUserRoleName(user.getRole());
             String accessToken = jwtUtil.generateAccessToken(user.getPhone(), userRole);
             
-            // 7. 生成刷新令牌
-            String refreshToken = jwtUtil.generateRefreshToken(user.getPhone());
+            // 7. 生成刷新令牌（也携带角色信息）
+            String refreshToken = jwtUtil.generateRefreshToken(user.getPhone(), userRole);
             
             // 8. 将刷新令牌存储在Redis中
             String refreshKey = "refresh_token:" + user.getPhone();
             refreshTokenRedisTemplate.opsForValue().set(refreshKey, refreshToken, 30, TimeUnit.DAYS);
 
-            // 9. 设置HttpOnly Cookie（仅设置访问令牌）
+            // 9. 设置HttpOnly Cookie（设置访问令牌）
             response.addCookie(new jakarta.servlet.http.Cookie("access_token", accessToken) {{
                 setHttpOnly(true);
                 setSecure(false); // 生产环境中应设为true
                 setPath("/");
                 setMaxAge(Math.toIntExact(JwtUtil.JWT_TOKEN_VALIDITY));
             }});
+            
+            // 10. 设置刷新令牌Cookie（也使用HttpOnly）
+            response.addCookie(new jakarta.servlet.http.Cookie("refresh_token", refreshToken) {{
+                setHttpOnly(true);
+                setSecure(false); // 生产环境中应设为true
+                setPath("/");
+                setMaxAge(Math.toIntExact(JwtUtil.REFRESH_TOKEN_VALIDITY));
+            }});
 
-            // 10. 构造响应（仅返回用户相关信息，不返回令牌）
-            Map<String, String> userInfo = new HashMap<>();
+            // 11. 构造响应（同时返回访问令牌和刷新令牌给前端存储）
+            Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("role", user.getRole().toString());
             userInfo.put("username", user.getUsername());
+            userInfo.put("accessToken", accessToken); // 返回访问令牌
+            userInfo.put("refreshToken", refreshToken); // 返回刷新令牌
             userInfo.put("message", "登录成功");
 
             return ResultBean.success(userInfo);
@@ -202,25 +214,47 @@ public class AuthController {
      * @return 用户信息
      */
     @GetMapping("/check")
-    public ResultBean<Map<String, Object>> checkUserStatus(@CookieValue(name = "access_token", required = false) String accessToken) {
+    public ResultBean<Object> checkUserStatus(@CookieValue(name = "access_token", required = false) String accessToken) {
         try {
             // 检查访问令牌是否存在
             if (accessToken == null || accessToken.isEmpty()) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "未找到访问令牌");
+                return ResultBean.of(StatusCode.INVALID_TOKEN, "访问令牌不存在，请刷新令牌");
             }
 
-            // 验证令牌有效性
-            if (!jwtUtil.validateToken(accessToken, jwtUtil.getUsernameFromToken(accessToken))) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "访问令牌无效或已过期");
+            String username;
+            try {
+                // 从令牌中获取用户名（手机号）
+                username = jwtUtil.getUsernameFromToken(accessToken);
+            } catch (Exception e) {
+                // 令牌解析失败
+                return ResultBean.of(StatusCode.INVALID_TOKEN, "访问令牌无效，请刷新令牌");
             }
 
-            // 从令牌中获取用户名（手机号）
-            String phone = jwtUtil.getUsernameFromToken(accessToken);
+            // 验证令牌是否已过期
+            if (jwtUtil.isTokenExpired(accessToken)) {
+                // 将过期的访问令牌存储到Redis中，设置较短的过期时间（例如1小时）
+                String expiredTokenKey = "expired_token:" + accessToken;
+                refreshTokenRedisTemplate.opsForValue().set(expiredTokenKey, "1", 1, TimeUnit.HOURS);
+                
+                return ResultBean.of(StatusCode.EXPIRED_TOKEN, "访问令牌已过期，请刷新令牌");
+            }
+
+            // 检查访问令牌是否即将过期（小于30分钟）
+            long remainingTime = jwtUtil.getRemainingTimeFromToken(accessToken);
+            long thirtyMinutesInMillis = 30 * 60 * 1000; // 30分钟的毫秒数
+            
+            if (remainingTime < thirtyMinutesInMillis) {
+                // 将即将过期的访问令牌存储到Redis中，设置与令牌剩余时间相同的过期时间
+                String expiredTokenKey = "expired_token:" + accessToken;
+                refreshTokenRedisTemplate.opsForValue().set(expiredTokenKey, "1", remainingTime, TimeUnit.MILLISECONDS);
+                
+                return ResultBean.of(StatusCode.EXPIRED_TOKEN, "访问令牌即将过期，请刷新令牌");
+            }
 
             // 获取用户信息
-            Users user = usersService.getUserByPhone(phone);
+            Users user = usersService.getUserByPhone(username);
             if (user == null) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "用户不存在");
+                return ResultBean.fail(StatusCode.USER_NOT_FOUND, "用户不存在");
             }
 
             // 检查用户状态
@@ -249,37 +283,39 @@ public class AuthController {
     /**
      * 刷新访问令牌
      * @param response HttpServletResponse对象，用于设置新的HttpOnly Cookie
+     * @param refreshToken 从Cookie中获取的刷新令牌
      * @return 操作结果
      */
     @PostMapping("/refresh")
-    public ResultBean<Map<String, String>> refresh(HttpServletResponse response, 
-                                                   @CookieValue(name = "access_token", required = false) String accessToken) {
+    public ResultBean<Object> refresh(HttpServletResponse response, 
+                                      @CookieValue(name = "refresh_token", required = false) String refreshToken) {
         try {
-            if (accessToken == null) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "缺少访问令牌");
+            // 检查刷新令牌是否存在
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                return ResultBean.fail(StatusCode.INVALID_TOKEN, "未提供刷新令牌");
             }
             
-            // 从访问令牌中获取用户名
-            String username = jwtUtil.getUsernameFromToken(accessToken);
+            // 从刷新令牌中获取用户名
+            String username = jwtUtil.getUsernameFromToken(refreshToken);
             
             // 从Redis中获取存储的刷新令牌
             String refreshKey = "refresh_token:" + username;
             String storedRefreshToken = (String) refreshTokenRedisTemplate.opsForValue().get(refreshKey);
             
             // 检查刷新令牌是否有效
-            if (storedRefreshToken == null) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "无效的刷新令牌");
+            if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+                return ResultBean.fail(StatusCode.INVALID_TOKEN, "无效的刷新令牌");
             }
             
             // 验证刷新令牌是否过期
             if (!jwtUtil.validateToken(storedRefreshToken, username)) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "刷新令牌已过期");
+                return ResultBean.fail(StatusCode.EXPIRED_TOKEN, "刷新令牌已过期");
             }
             
             // 获取用户信息以生成新的访问令牌
             Users user = usersService.getUserByPhone(username);
             if (user == null) {
-                return ResultBean.fail(StatusCode.UNAUTHORIZED, "用户不存在");
+                return ResultBean.fail(StatusCode.USER_NOT_FOUND, "用户不存在");
             }
             
             // 生成新的访问令牌（携带角色信息）
@@ -294,17 +330,20 @@ public class AuthController {
                 setMaxAge(Math.toIntExact(JwtUtil.JWT_TOKEN_VALIDITY));
             }});
 
-            Map<String, String> result = new HashMap<>();
+            // 构造响应（返回新的访问令牌给前端）
+            Map<String, Object> result = new HashMap<>();
+            result.put("accessToken", newAccessToken);
             result.put("message", "令牌刷新成功");
             return ResultBean.success(result);
         } catch (Exception e) {
-            return ResultBean.fail(StatusCode.UNAUTHORIZED, "刷新令牌无效");
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "刷新令牌无效: " + e.getMessage());
         }
     }
 
     /**
      * 用户登出
      * @param response HttpServletResponse对象，用于清除Cookie
+     * @param accessToken 从Cookie中获取的访问令牌
      * @return 操作结果
      */
     @PostMapping("/logout")
@@ -318,15 +357,28 @@ public class AuthController {
             setMaxAge(0); // 立即过期
         }});
         
+        // 清除刷新令牌Cookie
+        response.addCookie(new jakarta.servlet.http.Cookie("refresh_token", "") {{
+            setHttpOnly(true);
+            setSecure(false);
+            setPath("/");
+            setMaxAge(0); // 立即过期
+        }});
+        
         // 如果有访问令牌，则从Redis中删除对应的刷新令牌和用户权限缓存
-        if (accessToken != null) {
-            String username = jwtUtil.getUsernameFromToken(accessToken);
-            String refreshKey = "refresh_token:" + username;
-            refreshTokenRedisTemplate.delete(refreshKey);
-            
-            // 清除用户权限缓存
-            if (usersService instanceof UsersServiceImpl) {
-                ((UsersServiceImpl) usersService).clearUserCache(username);
+        if (accessToken != null && !accessToken.isEmpty()) {
+            try {
+                String username = jwtUtil.getUsernameFromToken(accessToken);
+                String refreshKey = "refresh_token:" + username;
+                refreshTokenRedisTemplate.delete(refreshKey);
+                
+                // 清除用户权限缓存
+                if (usersService instanceof UsersServiceImpl) {
+                    ((UsersServiceImpl) usersService).clearUserCache(username);
+                }
+            } catch (Exception e) {
+                // 即使解析令牌失败也继续执行登出操作
+                log.warn("解析访问令牌时发生错误: {}", e.getMessage());
             }
         }
         
