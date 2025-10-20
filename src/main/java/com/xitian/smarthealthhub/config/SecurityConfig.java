@@ -95,6 +95,7 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN") // 管理员接口仅允许管理员访问
                 .requestMatchers("/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 医生接口允许医生和管理员访问
                 .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN") // 用户接口允许用户和管理员访问
+                .requestMatchers("/schedule/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 排班接口允许医生和管理员访问
                 .anyRequest().authenticated() // 其他请求需要认证
             )
             // 禁用表单登录

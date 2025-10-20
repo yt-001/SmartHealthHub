@@ -7,7 +7,7 @@ import com.xitian.smarthealthhub.service.DepartmentsService;
 import org.springframework.stereotype.Service;
 
 /**
- * 科室Service实现类
+ * 科室服务实现类
  */
 @Service
 public class DepartmentsServiceImpl extends ServiceImpl<DepartmentsMapper, Departments> implements DepartmentsService {

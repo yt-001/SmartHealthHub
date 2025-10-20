@@ -7,6 +7,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serial;
+import java.io.Serializable;
 
 /**
  * 科室实体类
@@ -18,11 +19,9 @@ import java.io.Serial;
 @AllArgsConstructor
 @SuperBuilder
 @TableName("departments")
-public class Departments extends BaseEntity {
-
+public class Departments extends BaseEntity implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-
     /**
      * 科室名称
      */
@@ -41,7 +40,7 @@ public class Departments extends BaseEntity {
      * 科室主任医生ID，关联users.id
      */
     @TableField("head_doctor_id")
-    @Schema(description = "科室主任医生ID")
+    @Schema(description = "科室主任医生ID，关联users.id")
     private Long headDoctorId;
 
     /**
