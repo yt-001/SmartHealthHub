@@ -3,12 +3,15 @@ package com.xitian.smarthealthhub.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xitian.smarthealthhub.converter.DoctorDeptVOConverter;
 import com.xitian.smarthealthhub.converter.DoctorScheduleCalendarConverter;
+import com.xitian.smarthealthhub.domain.dto.DoctorScheduleCreateDTO;
 import com.xitian.smarthealthhub.domain.entity.DoctorSchedules;
 import com.xitian.smarthealthhub.domain.entity.DoctorProfiles;
 import com.xitian.smarthealthhub.domain.entity.Departments;
 import com.xitian.smarthealthhub.domain.entity.Users;
 import com.xitian.smarthealthhub.domain.query.DoctorScheduleCalendarQuery;
+import com.xitian.smarthealthhub.domain.vo.DoctorDeptVO;
 import com.xitian.smarthealthhub.mapper.DoctorSchedulesMapper;
 import com.xitian.smarthealthhub.mapper.DoctorProfilesMapper;
 import com.xitian.smarthealthhub.mapper.DepartmentsMapper;
@@ -19,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -124,6 +128,96 @@ public class DoctorSchedulesServiceImpl extends ServiceImpl<DoctorSchedulesMappe
                     Departments department = departmentMap.get(Long.valueOf(schedule.getDeptId()));
                     Users doctorUser = doctorUserMap.get(schedule.getDoctorId());
                     return DoctorScheduleCalendarConverter.toCalendarVO(schedule, doctorProfile, department, doctorUser);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * 创建医生排班
+     * @param scheduleCreateDTO 排班创建信息
+     * @return 是否创建成功
+     */
+    @Override
+    public boolean createSchedule(DoctorScheduleCreateDTO scheduleCreateDTO) {
+        // 检查是否已存在相同医生、相同日期、相同班次的排班记录
+        LambdaQueryWrapper<DoctorSchedules> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(DoctorSchedules::getDoctorId, scheduleCreateDTO.getDoctorId())
+                .eq(DoctorSchedules::getScheduleDate, scheduleCreateDTO.getScheduleDate())
+                .eq(DoctorSchedules::getShiftCode, scheduleCreateDTO.getShiftCode());
+        
+        if (this.count(queryWrapper) > 0) {
+            // 已存在相同的排班记录
+            throw new RuntimeException("该医生在指定日期和班次已有排班记录");
+        }
+        
+        // 构建排班实体对象
+        DoctorSchedules schedule = DoctorSchedules.builder()
+                .doctorId(scheduleCreateDTO.getDoctorId())
+                .deptId(scheduleCreateDTO.getDeptId())
+                .scheduleDate(scheduleCreateDTO.getScheduleDate())
+                .shiftCode(scheduleCreateDTO.getShiftCode())
+                .roomNo(scheduleCreateDTO.getRoomNo())
+                .maxAppoint(scheduleCreateDTO.getMaxAppoint())
+                .extraJson(scheduleCreateDTO.getExtraJson())
+                .status((byte) 1) // 默认启用状态
+                .isDeleted((byte) 0) // 未删除
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        
+        // 保存到数据库
+        return this.save(schedule);
+    }
+    
+    /**
+     * 获取医生科室信息列表，用于排班选择
+     * @return 医生科室信息列表
+     */
+    @Override
+    public List<DoctorDeptVO> listDoctorDeptInfo() {
+        // 查询所有医生档案信息
+        List<DoctorProfiles> doctorProfilesList = doctorProfilesMapper.selectList(null);
+        
+        if (CollectionUtils.isEmpty(doctorProfilesList)) {
+            return List.of();
+        }
+        
+        // 提取医生用户ID和科室ID
+        List<Long> doctorUserIds = doctorProfilesList.stream()
+                .map(DoctorProfiles::getUserId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        List<Integer> deptIds = doctorProfilesList.stream()
+                .map(DoctorProfiles::getDeptId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询医生用户信息
+        List<Users> doctors = doctorUserIds.isEmpty() ? List.of() : 
+                usersMapper.selectBatchIds(doctorUserIds);
+        
+        // 批量查询科室信息（需要类型转换）
+        List<Departments> departments = deptIds.isEmpty() ? List.of() : 
+                departmentsMapper.selectBatchIds(
+                    deptIds.stream()
+                        .map(Integer::longValue) // 转换Integer到Long
+                        .collect(Collectors.toList())
+                );
+        
+        // 构建映射关系
+        Map<Long, Users> doctorUserMap = doctors.stream()
+                .collect(Collectors.toMap(Users::getId, user -> user));
+        
+        Map<Long, Departments> departmentMap = departments.stream()
+                .collect(Collectors.toMap(Departments::getId, dept -> dept));
+        
+        // 转换为VO对象
+        return doctorProfilesList.stream()
+                .map(profile -> {
+                    Users doctorUser = doctorUserMap.get(profile.getUserId());
+                    Departments department = departmentMap.get(Long.valueOf(profile.getDeptId()));
+                    return DoctorDeptVOConverter.toVO(profile, doctorUser, department);
                 })
                 .collect(Collectors.toList());
     }
