@@ -87,8 +87,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (userDetails != null) {
                 // 验证用户状态是否正常
-                com.xitian.smarthealthhub.domain.entity.Users user = 
-                    ((com.xitian.smarthealthhub.service.UsersService) userDetailsService).getUserByPhone(username);
+                Users user =
+                    ((UsersService) userDetailsService).getUserByPhone(username);
                 if (user != null && user.getStatus() == 0) { // 0 表示正常状态
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
