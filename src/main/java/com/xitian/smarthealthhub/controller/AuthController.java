@@ -17,7 +17,6 @@ import com.xitian.smarthealthhub.service.impl.UsersServiceImpl;
 import com.xitian.smarthealthhub.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -30,7 +29,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 认证控制器，处理登录和令牌刷新
@@ -54,9 +52,6 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
-
-    @Autowired
-    private RedisTemplate<String, Object> refreshTokenRedisTemplate;
     
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -169,12 +164,8 @@ public class AuthController {
             
             // 7. 生成刷新令牌（也携带角色信息）
             String refreshToken = jwtUtil.generateRefreshToken(user.getPhone(), userRole);
-            
-            // 8. 将刷新令牌存储在Redis中
-            String refreshKey = "refresh_token:" + user.getPhone();
-            refreshTokenRedisTemplate.opsForValue().set(refreshKey, refreshToken, 30, TimeUnit.DAYS);
 
-            // 9. 设置HttpOnly Cookie（设置访问令牌）
+            // 8. 设置HttpOnly Cookie（设置访问令牌）
             response.addCookie(new jakarta.servlet.http.Cookie("access_token", accessToken) {{
                 setHttpOnly(true);
                 setSecure(false); // 生产环境中应设为true
@@ -182,7 +173,7 @@ public class AuthController {
                 setMaxAge(Math.toIntExact(JwtUtil.JWT_TOKEN_VALIDITY));
             }});
             
-            // 10. 设置刷新令牌Cookie（也使用HttpOnly）
+            // 9. 设置刷新令牌Cookie（也使用HttpOnly）
             response.addCookie(new jakarta.servlet.http.Cookie("refresh_token", refreshToken) {{
                 setHttpOnly(true);
                 setSecure(false); // 生产环境中应设为true
@@ -190,7 +181,7 @@ public class AuthController {
                 setMaxAge(Math.toIntExact(JwtUtil.REFRESH_TOKEN_VALIDITY));
             }});
 
-            // 11. 构造响应（同时返回访问令牌和刷新令牌给前端存储）
+            // 10. 构造响应（同时返回访问令牌和刷新令牌给前端存储）
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("role", user.getRole().toString());
             userInfo.put("username", user.getUsername());
@@ -232,23 +223,7 @@ public class AuthController {
 
             // 验证令牌是否已过期
             if (jwtUtil.isTokenExpired(accessToken)) {
-                // 将过期的访问令牌存储到Redis中，设置较短的过期时间（例如1小时）
-                String expiredTokenKey = "expired_token:" + accessToken;
-                refreshTokenRedisTemplate.opsForValue().set(expiredTokenKey, "1", 1, TimeUnit.HOURS);
-                
                 return ResultBean.of(StatusCode.EXPIRED_TOKEN, "访问令牌已过期，请刷新令牌");
-            }
-
-            // 检查访问令牌是否即将过期（小于30分钟）
-            long remainingTime = jwtUtil.getRemainingTimeFromToken(accessToken);
-            long thirtyMinutesInMillis = 30 * 60 * 1000; // 30分钟的毫秒数
-            
-            if (remainingTime < thirtyMinutesInMillis) {
-                // 将即将过期的访问令牌存储到Redis中，设置与令牌剩余时间相同的过期时间
-                String expiredTokenKey = "expired_token:" + accessToken;
-                refreshTokenRedisTemplate.opsForValue().set(expiredTokenKey, "1", remainingTime, TimeUnit.MILLISECONDS);
-                
-                return ResultBean.of(StatusCode.EXPIRED_TOKEN, "访问令牌即将过期，请刷新令牌");
             }
 
             // 获取用户信息
@@ -298,17 +273,8 @@ public class AuthController {
             // 从刷新令牌中获取用户名
             String username = jwtUtil.getUsernameFromToken(refreshToken);
             
-            // 从Redis中获取存储的刷新令牌
-            String refreshKey = "refresh_token:" + username;
-            String storedRefreshToken = (String) refreshTokenRedisTemplate.opsForValue().get(refreshKey);
-            
-            // 检查刷新令牌是否有效
-            if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
-                return ResultBean.fail(StatusCode.INVALID_TOKEN, "无效的刷新令牌");
-            }
-            
             // 验证刷新令牌是否过期
-            if (!jwtUtil.validateToken(storedRefreshToken, username)) {
+            if (!jwtUtil.validateToken(refreshToken, username)) {
                 return ResultBean.fail(StatusCode.EXPIRED_TOKEN, "刷新令牌已过期");
             }
             
@@ -364,23 +330,6 @@ public class AuthController {
             setPath("/");
             setMaxAge(0); // 立即过期
         }});
-        
-        // 如果有访问令牌，则从Redis中删除对应的刷新令牌和用户权限缓存
-        if (accessToken != null && !accessToken.isEmpty()) {
-            try {
-                String username = jwtUtil.getUsernameFromToken(accessToken);
-                String refreshKey = "refresh_token:" + username;
-                refreshTokenRedisTemplate.delete(refreshKey);
-                
-                // 清除用户权限缓存
-                if (usersService instanceof UsersServiceImpl) {
-                    ((UsersServiceImpl) usersService).clearUserCache(username);
-                }
-            } catch (Exception e) {
-                // 即使解析令牌失败也继续执行登出操作
-                log.warn("解析访问令牌时发生错误: {}", e.getMessage());
-            }
-        }
         
         // 清除安全上下文
         SecurityContextHolder.clearContext();

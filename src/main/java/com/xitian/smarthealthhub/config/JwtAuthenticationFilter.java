@@ -9,7 +9,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,9 +31,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtil jwtUtil;
-    
-    @Autowired
-    private RedisTemplate<String, Object> refreshTokenRedisTemplate;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -49,13 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 从刷新令牌中获取用户名
                 username = jwtUtil.getUsernameFromToken(refreshToken);
                 
-                // 检查Redis中是否存在有效的刷新令牌
-                String refreshKey = "refresh_token:" + username;
-                String storedRefreshToken = (String) refreshTokenRedisTemplate.opsForValue().get(refreshKey);
-                
                 // 验证刷新令牌是否有效
-                if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken) 
-                    || !jwtUtil.validateToken(refreshToken, username)) {
+                if (!jwtUtil.validateToken(refreshToken, username)) {
                     username = null;
                 }
             } catch (Exception e) {
@@ -70,14 +61,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             
             // 从刷新令牌中获取角色信息
             String role = null;
-            if (refreshToken != null) {
-                try {
-                    role = jwtUtil.getRoleFromToken(refreshToken);
-                } catch (Exception e) {
-                    logger.warn("无法从刷新令牌中获取角色信息: " + e.getMessage());
-                }
+            try {
+                role = jwtUtil.getRoleFromToken(refreshToken);
+            } catch (Exception e) {
+                logger.warn("无法从刷新令牌中获取角色信息: " + e.getMessage());
             }
-            
+
             // 如果刷新令牌中没有角色信息，说明令牌有问题，不进行认证
             if (role != null && !role.isEmpty()) {
                 // 构建UserDetails对象

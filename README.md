@@ -10,7 +10,6 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 - Java 17
 - MySQL 8.0+
 - MyBatis Plus
-- Redis (用于Session管理)
 - Spring Security
 - Lombok
 - Maven
@@ -45,19 +44,6 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 4. **application.yml配置**:
    ```yaml
    spring:
-     data:
-       redis:
-         host: localhost
-         port: 6379
-         timeout: 2000ms
-         lettuce:
-           pool:
-             max-active: 8
-             max-idle: 8
-             min-idle: 0
-             max-wait: -1ms
-   
-   server:
      servlet:
        session:
          cookie:
@@ -65,6 +51,9 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
            secure: false # 在生产环境中应设为true
            same-site: strict
            max-age: 1800
+   
+   server:
+     port: 9000
    ```
 
 ### 安全特性
@@ -73,7 +62,6 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 - **Secure**: 在生产环境中应启用，确保Cookie只在HTTPS下传输
 - **SameSite**: 设置为Strict，防止CSRF攻击
 - **JWT令牌**: 无状态认证机制，支持访问令牌和刷新令牌
-- **Redis存储**: 刷新令牌存储在Redis中，支持分布式部署
 - **Spring Security**: 提供全面的安全保护，包括认证和授权
 
 ### 测试接口
@@ -90,13 +78,12 @@ SmartHealthHub是一个基于Spring Boot的社区卫生服务管理系统，提�
 
 ## 部署说明
 
-1. 确保安装了Java 17+、MySQL 8.0+和Redis
+1. 确保安装了Java 17+和MySQL 8.0+
 2. 创建数据库并导入数据结构
-3. 修改`application.yml`中的数据库和Redis配置
+3. 修改`application.yml`中的数据库配置
 4. 运行项目: `mvn spring-boot:run`
 
 ## 注意事项
 
-1. Redis服务器需要在localhost:6379运行
-2. 数据库连接信息需要根据实际情况修改
-3. 在生产环境中，应该设置Redis密码并使用HTTPS
+1. 数据库连接信息需要根据实际情况修改
+2. 在生产环境中，应该使用HTTPS

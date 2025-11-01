@@ -13,8 +13,6 @@ import com.xitian.smarthealthhub.domain.vo.UserVO;
 import com.xitian.smarthealthhub.mapper.UsersMapper;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -29,9 +27,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements UsersService, UserDetailsService {
-    
-    @Autowired
-    private RedisTemplate<String, Object> redisTemplate;
     
     @Override
     public PageBean<UserVO> page(PageParam<UserQuery> param) {
