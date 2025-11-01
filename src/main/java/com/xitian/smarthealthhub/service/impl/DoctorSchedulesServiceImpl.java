@@ -133,6 +133,62 @@ public class DoctorSchedulesServiceImpl extends ServiceImpl<DoctorSchedulesMappe
     }
     
     /**
+     * 根据医生ID获取医生排班信息
+     * @param doctorId 医生ID
+     * @return 医生排班信息列表
+     */
+    @Override
+    public List<DoctorScheduleCalendarVO> getScheduleByDoctorId(Long doctorId) {
+        // 构建查询条件
+        LambdaQueryWrapper<DoctorSchedules> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(DoctorSchedules::getDoctorId, doctorId);
+        
+        // 只查询启用状态的排班
+        queryWrapper.eq(DoctorSchedules::getStatus, (byte) 1);
+        
+        // 查询排班数据
+        List<DoctorSchedules> scheduleList = this.list(queryWrapper);
+        
+        if (CollectionUtils.isEmpty(scheduleList)) {
+            return List.of();
+        }
+        
+        // 提取关联的科室ID
+        List<Integer> deptIds = scheduleList.stream()
+                .map(DoctorSchedules::getDeptId)
+                .distinct()
+                .collect(Collectors.toList());
+        
+        // 批量查询医生档案信息
+        DoctorProfiles doctorProfile = doctorProfilesMapper.selectOne(
+                Wrappers.<DoctorProfiles>lambdaQuery().eq(DoctorProfiles::getUserId, doctorId));
+        
+        // 批量查询科室信息（需要类型转换）
+        List<Departments> departments = deptIds.isEmpty() ? List.of() : 
+                departmentsMapper.selectBatchIds(
+                    deptIds.stream()
+                        .map(Integer::longValue) // 转换Integer到Long
+                        .collect(Collectors.toList())
+                );
+        
+        // 查询医生用户信息
+        Users doctorUser = usersMapper.selectById(doctorId);
+        
+        // 构建科室映射关系
+        Map<Long, Departments> departmentMap = departments.stream()
+                .collect(Collectors.toMap(Departments::getId, dept -> dept));
+        
+        // 转换为VO对象
+        return scheduleList.stream()
+                .map(schedule -> {
+                    // 注意：这里需要将Integer转换为Long来匹配departmentMap的键
+                    Departments department = departmentMap.get(Long.valueOf(schedule.getDeptId()));
+                    return DoctorScheduleCalendarConverter.toCalendarVO(schedule, doctorProfile, department, doctorUser);
+                })
+                .collect(Collectors.toList());
+    }
+    
+    /**
      * 创建医生排班
      * @param scheduleCreateDTO 排班创建信息
      * @return 是否创建成功

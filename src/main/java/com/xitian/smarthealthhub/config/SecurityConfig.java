@@ -5,12 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -20,6 +22,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * 安全配置类
@@ -91,14 +94,26 @@ public class SecurityConfig {
             )
             // 配置授权规则
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/auth/login", "/auth/register", "/auth/doctor-authenticate", "/auth/patient-authenticate", "/auth/refresh").permitAll() // 允许访问公共接口
-                .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN") // 管理员接口仅允许管理员访问
-                .requestMatchers("/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 医生接口允许医生和管理员访问
-                .requestMatchers("/user/**").hasAnyAuthority("ROLE_USER", "ROLE_DOCTOR", "ROLE_ADMIN") // 用户接口允许用户、医生和管理员访问
-                .requestMatchers("/user/updateProfile").hasAnyAuthority("ROLE_USER", "ROLE_DOCTOR", "ROLE_ADMIN") // 用户信息更新接口允许所有角色访问
-                .requestMatchers("/doctor/profiles").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN")
-                .requestMatchers("/schedule/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN") // 排班接口允许医生和管理员访问
-                .anyRequest().authenticated() // 其他请求需要认证
+                // 公共接口路径 - 无需认证
+                .requestMatchers(PermissionConfig.getPublicPaths()).permitAll()
+                // 动态配置权限路径
+                .requestMatchers("/**").access((authentication, object) -> {
+                    String requestPath = object.getRequest().getRequestURI();
+                    
+                    // 匹配路径和角色
+                    for (Map.Entry<String, RoleCombination> entry : PermissionConfig.getPathRoleMapping().entrySet()) {
+                        String pattern = entry.getKey();
+                        RoleCombination roleCombination = entry.getValue();
+                        
+                        // 路径匹配
+                        if (pattern.equals("/**") || matchPath(pattern, requestPath)) {
+                            return authorizationManager(authentication.get(), roleCombination.getRoles());
+                        }
+                    }
+                    
+                    // 默认情况下需要认证
+                    return authorizationManager(authentication.get(), new String[]{});
+                })
             )
             // 禁用表单登录
             .formLogin(AbstractHttpConfigurer::disable)
@@ -108,5 +123,47 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
+    }
+    
+    /**
+     * 路径匹配
+     * @param pattern 模式
+     * @param path 路径
+     * @return 是否匹配
+     */
+    private boolean matchPath(String pattern, String path) {
+        if (pattern.endsWith("/**")) {
+            String prefix = pattern.substring(0, pattern.length() - 3);
+            return path.startsWith(prefix);
+        } else if (pattern.contains("*")) {
+            // 简单的通配符匹配
+            String regex = pattern.replace("*", "[^/]*");
+            return path.matches(regex);
+        } else {
+            return path.equals(pattern);
+        }
+    }
+    
+    /**
+     * 授权管理器
+     * @param authentication 认证信息
+     * @param requiredRoles 需要的角色
+     * @return 授权决策
+     */
+    private AuthorizationDecision authorizationManager(
+            Authentication authentication,
+            String[] requiredRoles) {
+        
+        if (requiredRoles.length == 0) {
+            // 如果没有指定角色，则需要认证
+            return new AuthorizationDecision(authentication.isAuthenticated());
+        }
+        
+        // 检查用户是否具有所需角色之一
+        boolean hasRole = Arrays.stream(requiredRoles)
+                .anyMatch(role -> authentication.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals(role)));
+        
+        return new AuthorizationDecision(hasRole);
     }
 }

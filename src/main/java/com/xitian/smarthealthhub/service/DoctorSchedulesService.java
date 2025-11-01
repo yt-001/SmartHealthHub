@@ -23,6 +23,13 @@ public interface DoctorSchedulesService extends IService<DoctorSchedules> {
     List<DoctorScheduleCalendarVO> getScheduleCalendar(DoctorScheduleCalendarQuery query);
     
     /**
+     * 根据医生ID获取医生排班信息
+     * @param doctorId 医生ID
+     * @return 医生排班信息列表
+     */
+    List<DoctorScheduleCalendarVO> getScheduleByDoctorId(Long doctorId);
+    
+    /**
      * 创建医生排班
      * @param scheduleCreateDTO 排班创建信息
      * @return 是否创建成功

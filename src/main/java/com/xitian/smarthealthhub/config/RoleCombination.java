@@ -1,8 +1,11 @@
 package com.xitian.smarthealthhub.config;
 
+import lombok.Getter;
+
 /**
  * 角色组合枚举，用于定义不同角色的访问权限组合
  */
+@Getter
 public enum RoleCombination {
     /**
      * 所有角色都可以访问
@@ -40,7 +43,4 @@ public enum RoleCombination {
         this.roles = roles;
     }
 
-    public String[] getRoles() {
-        return roles;
-    }
 }

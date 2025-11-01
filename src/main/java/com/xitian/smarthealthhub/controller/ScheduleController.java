@@ -40,6 +40,22 @@ public class ScheduleController {
     }
     
     /**
+     * 根据医生ID获取医生排班信息
+     * @param doctorId 医生ID
+     * @return 医生排班信息
+     */
+    @Operation(summary = "根据医生ID获取医生排班信息")
+    @GetMapping("/doctor/{doctorId}")
+    public ResultBean<List<DoctorScheduleCalendarVO>> getScheduleByDoctorId(@PathVariable Long doctorId) {
+        try {
+            List<DoctorScheduleCalendarVO> scheduleData = doctorSchedulesService.getScheduleByDoctorId(doctorId);
+            return ResultBean.success(scheduleData);
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "获取医生排班信息失败: " + e.getMessage());
+        }
+    }
+    
+    /**
      * 创建医生排班
      * @param scheduleCreateDTO 排班创建信息
      * @return 操作结果

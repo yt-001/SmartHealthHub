@@ -16,11 +16,12 @@ public class PermissionConfig {
     public static Map<String, RoleCombination> getPathRoleMapping() {
         Map<String, RoleCombination> mapping = new LinkedHashMap<>();
         
-        // 管理员专属接口
-        mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
-        
-        // 医生接口（管理员和医生可以访问）
-        mapping.put("/doctor/**", RoleCombination.ADMIN_DOCTOR);
+        // 健康文章接口权限控制
+        mapping.put("/health-articles/page", RoleCombination.ALL); // 分页查询（所有角色）
+        mapping.put("/health-articles/*/view", RoleCombination.ALL); // 查看文章详情（所有角色）
+        mapping.put("/health-articles/create", RoleCombination.DOCTOR_ONLY); // 创建文章（仅医生）
+        mapping.put("/health-articles/update", RoleCombination.DOCTOR_ONLY); // 更新文章（仅医生）
+        mapping.put("/health-articles/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除文章（管理员和医生）
         
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
@@ -31,8 +32,17 @@ public class PermissionConfig {
         // 医生档案接口（医生和管理员可以访问）
         mapping.put("/doctor/profiles", RoleCombination.ADMIN_DOCTOR);
         
+        // 医生接口（管理员和医生可以访问）
+        mapping.put("/doctor/**", RoleCombination.ADMIN_DOCTOR);
+        
         // 排班接口（医生和管理员可以访问）
         mapping.put("/schedule/**", RoleCombination.ADMIN_DOCTOR);
+        
+        // 管理员专属接口
+        mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
+        
+        // 默认权限（需要放在最后）
+        mapping.put("/**", RoleCombination.ALL);
         
         return mapping;
     }
