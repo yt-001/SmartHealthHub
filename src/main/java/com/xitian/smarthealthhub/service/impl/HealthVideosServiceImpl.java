@@ -1,0 +1,204 @@
+package com.xitian.smarthealthhub.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xitian.smarthealthhub.bean.PageBean;
+import com.xitian.smarthealthhub.bean.PageParam;
+import com.xitian.smarthealthhub.converter.HealthVideoConverter;
+import com.xitian.smarthealthhub.domain.dto.HealthVideoCreateDTO;
+import com.xitian.smarthealthhub.domain.dto.HealthVideoUpdateDTO;
+import com.xitian.smarthealthhub.domain.entity.HealthVideos;
+import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
+import com.xitian.smarthealthhub.mapper.HealthVideosMapper;
+import com.xitian.smarthealthhub.service.HealthVideosService;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import jakarta.annotation.Resource;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.xitian.smarthealthhub.domain.entity.Users;
+import com.xitian.smarthealthhub.mapper.UsersMapper;
+
+/**
+ * 健康视频服务实现类
+ */
+@Service
+public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, HealthVideos> implements HealthVideosService {
+    
+    @Resource
+    private UsersMapper usersMapper;
+    
+    /**
+     * 获取作者姓名
+     * @param authorId 作者ID
+     * @return 作者姓名
+     */
+    private String getAuthorName(Long authorId) {
+        Users user = usersMapper.selectById(authorId);
+        return user != null ? user.getRealName() : "";
+    }
+    
+    /**
+     * 分页查询健康视频
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据
+     */
+    @Override
+    public PageBean<HealthVideoVO> pageQuery(PageParam<HealthVideoQuery> param) {
+        // 创建分页对象
+        Page<HealthVideos> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<HealthVideos> queryWrapper = Wrappers.lambdaQuery();
+        
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            HealthVideoQuery query = param.getQuery();
+            
+            // 视频标题模糊查询
+            if (StringUtils.hasText(query.getTitle())) {
+                queryWrapper.like(HealthVideos::getTitle, query.getTitle());
+            }
+            
+            // 作者姓名模糊查询
+            if (StringUtils.hasText(query.getAuthorName())) {
+                queryWrapper.like(HealthVideos::getAuthorName, query.getAuthorName());
+            }
+            
+            // 视频分类查询
+            if (StringUtils.hasText(query.getCategory())) {
+                queryWrapper.like(HealthVideos::getCategory, query.getCategory());
+            }
+            
+            // 是否置顶查询
+            if (query.getIsTop() != null) {
+                queryWrapper.eq(HealthVideos::getIsTop, query.getIsTop());
+            }
+            
+            // 状态查询
+            if (query.getStatus() != null) {
+                queryWrapper.eq(HealthVideos::getStatus, query.getStatus());
+            }
+            
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(query.getCreatedStart()) || StringUtils.hasText(query.getCreatedEnd())) {
+                if (StringUtils.hasText(query.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(query.getCreatedEnd())) {
+                    queryWrapper.apply("created_at <= {0}", query.getCreatedEnd() + " 23:59:59");
+                }
+            }
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(HealthVideos::getCreatedAt);
+        
+        // 执行分页查询
+        Page<HealthVideos> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为VO对象
+        List<HealthVideoVO> voList = HealthVideoConverter.toVOList(resultPage.getRecords());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    /**
+     * 根据ID获取健康视频详情
+     * @param id 视频ID
+     * @return 健康视频详情
+     */
+    @Override
+    public HealthVideoVO getHealthVideoById(Long id) {
+        HealthVideos healthVideo = this.getById(id);
+        if (healthVideo == null || healthVideo.getIsDeleted() == 1) {
+            return null;
+        }
+        
+        // 增加浏览次数
+        healthVideo.setViewCount(healthVideo.getViewCount() + 1);
+        this.updateById(healthVideo);
+        
+        return HealthVideoConverter.toVO(healthVideo);
+    }
+    
+    /**
+     * 创建健康视频
+     * @param videoCreateDTO 视频创建信息
+     * @return 操作结果
+     */
+    @Override
+    public boolean createHealthVideo(HealthVideoCreateDTO videoCreateDTO) {
+        HealthVideos healthVideo = HealthVideos.builder()
+                .title(videoCreateDTO.getTitle())
+                .description(videoCreateDTO.getDescription())
+                .videoUrl(videoCreateDTO.getVideoUrl())
+                .coverImageUrl(videoCreateDTO.getCoverImageUrl())
+                .duration(videoCreateDTO.getDuration())
+                .authorId(videoCreateDTO.getAuthorId())
+                .authorName(getAuthorName(videoCreateDTO.getAuthorId()))
+                .category(videoCreateDTO.getCategory())
+                .isTop(videoCreateDTO.getIsTop() != null ? videoCreateDTO.getIsTop() : (byte) 0)
+                .status(videoCreateDTO.getStatus() != null ? videoCreateDTO.getStatus() : (byte) 1)
+                .viewCount(0)
+                .likeCount(0)
+                .commentCount(0)
+                .isDeleted((byte) 0)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        
+        return this.save(healthVideo);
+    }
+    
+    /**
+     * 更新健康视频
+     * @param videoUpdateDTO 视频更新信息
+     * @return 操作结果
+     */
+    @Override
+    public boolean updateHealthVideo(HealthVideoUpdateDTO videoUpdateDTO) {
+        HealthVideos healthVideo = this.getById(videoUpdateDTO.getId());
+        if (healthVideo == null || healthVideo.getIsDeleted() == 1) {
+            return false;
+        }
+        
+        healthVideo.setTitle(videoUpdateDTO.getTitle());
+        healthVideo.setDescription(videoUpdateDTO.getDescription());
+        healthVideo.setVideoUrl(videoUpdateDTO.getVideoUrl());
+        healthVideo.setCoverImageUrl(videoUpdateDTO.getCoverImageUrl());
+        healthVideo.setDuration(videoUpdateDTO.getDuration());
+        healthVideo.setCategory(videoUpdateDTO.getCategory());
+        healthVideo.setIsTop(videoUpdateDTO.getIsTop() != null ? videoUpdateDTO.getIsTop() : healthVideo.getIsTop());
+        healthVideo.setStatus(videoUpdateDTO.getStatus() != null ? videoUpdateDTO.getStatus() : healthVideo.getStatus());
+        healthVideo.setUpdatedAt(LocalDateTime.now());
+        
+        return this.updateById(healthVideo);
+    }
+    
+    /**
+     * 删除健康视频（逻辑删除）
+     * @param id 视频ID
+     * @return 操作结果
+     */
+    @Override
+    public boolean deleteHealthVideo(Long id) {
+        HealthVideos healthVideo = this.getById(id);
+        if (healthVideo == null || healthVideo.getIsDeleted() == 1) {
+            return false;
+        }
+        
+        healthVideo.setIsDeleted((byte) 1);
+        healthVideo.setUpdatedAt(LocalDateTime.now());
+        
+        return this.updateById(healthVideo);
+    }
+}

@@ -23,6 +23,20 @@ public class PermissionConfig {
         mapping.put("/health-articles/update", RoleCombination.DOCTOR_ONLY); // 更新文章（仅医生）
         mapping.put("/health-articles/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除文章（管理员和医生）
         
+        // 健康视频接口权限控制
+        mapping.put("/health-videos/page", RoleCombination.ALL); // 分页查询（所有角色）
+        mapping.put("/health-videos/*/view", RoleCombination.ALL); // 查看视频详情（所有角色）
+        mapping.put("/health-videos/create", RoleCombination.DOCTOR_ONLY); // 创建视频（仅医生）
+        mapping.put("/health-videos/update", RoleCombination.DOCTOR_ONLY); // 更新视频（仅医生）
+        mapping.put("/health-videos/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除视频（管理员和医生）
+        
+        // 健康视频评论接口权限控制
+        mapping.put("/health-video-comments/page", RoleCombination.ALL); // 分页查询（所有角色）
+        mapping.put("/health-video-comments/video/*", RoleCombination.ALL); // 查看视频评论列表（所有角色）
+        mapping.put("/health-video-comments/*", RoleCombination.ALL); // 查看评论详情（所有角色）
+        mapping.put("/health-video-comments/create", RoleCombination.ALL); // 创建评论（所有角色）
+        mapping.put("/health-video-comments/delete/**", RoleCombination.ALL); // 删除评论（管理员、用户和医生）
+        
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
         
