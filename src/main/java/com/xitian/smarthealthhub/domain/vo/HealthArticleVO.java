@@ -78,7 +78,7 @@ public class HealthArticleVO extends BaseVO {
     private Byte isTop;
     
     /**
-     * 状态：0 草稿 1 已发布 2 已下架
+     * 状态：0 草稿 1 已发布 2 已下架 3 审核中 4 未通过审核
      */
     private Byte status;
 }

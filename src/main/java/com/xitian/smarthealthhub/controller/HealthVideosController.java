@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.HealthVideoCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
 import com.xitian.smarthealthhub.service.HealthVideosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,8 +35,8 @@ public class HealthVideosController {
      */
     @Operation(summary = "分页查询健康视频（管理端）")
     @PostMapping("/page")
-    public ResultBean<PageBean<HealthVideoVO>> page(@RequestBody PageParam<HealthVideoQuery> param) {
-        PageBean<HealthVideoVO> pageBean = healthVideosService.pageQuery(param);
+    public ResultBean<PageBean<HealthVideoReviewVO>> page(@RequestBody PageParam<HealthVideoQuery> param) {
+        PageBean<HealthVideoReviewVO> pageBean = healthVideosService.pageQuery(param);
         return ResultBean.success(pageBean);
     }
     
@@ -124,7 +125,7 @@ public class HealthVideosController {
     /**
      * 审核健康视频
      * @param id 视频ID
-     * @param status 审核状态（1:通过 2:下架 4:不通过）
+     * @param status 审核状态（0:草稿 1:已发布 2:已下架 3:审核中 4:未通过审核）
      * @return 操作结果
      */
     @Operation(summary = "审核健康视频")
@@ -132,8 +133,8 @@ public class HealthVideosController {
     public ResultBean<String> reviewHealthVideo(@PathVariable Long id, @RequestParam Byte status) {
         try {
             // 验证状态值是否有效
-            if (status != 1 && status != 2 && status != 4) {
-                return ResultBean.fail(StatusCode.PARAMETER_ERROR, "无效的状态值，只允许设置为1(通过)、2(下架)或4(不通过)");
+            if (status < 0 || status > 4) {
+                return ResultBean.fail(StatusCode.PARAMETER_ERROR, "无效的状态值，只允许设置为0(草稿)、1(已发布)、2(已下架)、3(审核中)或4(未通过审核)");
             }
             
             HealthVideoUpdateDTO videoUpdateDTO = new HealthVideoUpdateDTO();
@@ -142,7 +143,14 @@ public class HealthVideosController {
             
             boolean updated = healthVideosService.updateHealthVideo(videoUpdateDTO);
             if (updated) {
-                String statusText = status == 1 ? "审核通过" : (status == 2 ? "已下架" : "审核不通过");
+                String statusText = switch (status) {
+                    case 0 -> "已设为草稿";
+                    case 1 -> "审核通过";
+                    case 2 -> "已下架";
+                    case 3 -> "设为审核中";
+                    case 4 -> "审核不通过";
+                    default -> "";
+                };
                 return ResultBean.success("视频" + statusText);
             } else {
                 return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "视频不存在或已被删除");

@@ -23,15 +23,14 @@ public class PermissionConfig {
         mapping.put("/health-articles/update", RoleCombination.DOCTOR_ONLY); // 更新文章（仅医生）
         mapping.put("/health-articles/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除文章（管理员和医生）
         
-        // 健康视频接口权限控制
-        mapping.put("/health-videos/page", RoleCombination.ALL); // 分页查询（所有角色）
-        mapping.put("/health-videos/*/view", RoleCombination.ALL); // 查看视频详情（所有角色）
-        mapping.put("/health-videos/create", RoleCombination.DOCTOR_ONLY); // 创建视频（仅医生）
-        mapping.put("/health-videos/update", RoleCombination.DOCTOR_ONLY); // 更新视频（仅医生）
-        mapping.put("/health-videos/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除视频（管理员和医生）
-        mapping.put("/health-videos/*/review", RoleCombination.ADMIN_ONLY); // 审核视频（仅管理员）
+        // 健康视频管理接口权限映射
+        mapping.put("/health-videos/page", RoleCombination.ADMIN_ONLY); // 分页查询健康视频（仅管理员）
+        mapping.put("/health-videos/create", RoleCombination.DOCTOR_ONLY); // 创建健康视频（医生）
+        mapping.put("/health-videos/update", RoleCombination.ADMIN_DOCTOR); // 更新健康视频（医生和管理员）
+        mapping.put("/health-videos/review", RoleCombination.ADMIN_ONLY); // 审核健康视频（仅管理员）
+        mapping.put("/health-videos/delete/*", RoleCombination.ADMIN_DOCTOR); // 删除健康视频（医生和管理员）
         
-        // 健康视频评论接口权限控制
+        // 健康视频评论管理接口权限映射
         mapping.put("/health-video-comments/page", RoleCombination.ALL); // 分页查询（所有角色）
         mapping.put("/health-video-comments/video/*", RoleCombination.ALL); // 查看视频评论列表（所有角色）
         mapping.put("/health-video-comments/*", RoleCombination.ALL); // 查看评论详情（所有角色）

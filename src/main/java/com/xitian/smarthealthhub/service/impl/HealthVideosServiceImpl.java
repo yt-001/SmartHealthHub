@@ -7,11 +7,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.HealthVideoConverter;
+import com.xitian.smarthealthhub.converter.HealthVideoReviewConverter;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthVideos;
 import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
 import com.xitian.smarthealthhub.mapper.HealthVideosMapper;
 import com.xitian.smarthealthhub.service.HealthVideosService;
 import org.springframework.stereotype.Service;
@@ -51,7 +53,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
      * @return 健康视频分页数据
      */
     @Override
-    public PageBean<HealthVideoVO> pageQuery(PageParam<HealthVideoQuery> param) {
+    public PageBean<HealthVideoReviewVO> pageQuery(PageParam<HealthVideoQuery> param) {
         // 创建分页对象
         Page<HealthVideos> page = new Page<>(param.getPageNum(), param.getPageSize());
         
@@ -111,7 +113,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
         Page<HealthVideos> resultPage = this.page(page, queryWrapper);
         
         // 转换为VO对象
-        List<HealthVideoVO> voList = HealthVideoConverter.toVOList(resultPage.getRecords());
+        List<HealthVideoReviewVO> voList = HealthVideoReviewConverter.toReviewVOList(resultPage.getRecords());
         
         // 构造并返回PageBean
         return PageBean.of(voList, resultPage.getTotal(), param);

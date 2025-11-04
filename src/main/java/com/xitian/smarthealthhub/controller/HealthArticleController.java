@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
+import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,19 +29,31 @@ public class HealthArticleController {
     private HealthArticlesService healthArticlesService;
     
     /**
-     * 分页查询健康文章
+     * 分页查询健康文章（管理端接口）
      * @param param 分页参数和查询条件
      * @return 健康文章分页数据
      */
-    @Operation(summary = "分页查询健康文章")
+    @Operation(summary = "分页查询健康文章（管理端）")
     @PostMapping("/page")
-    public ResultBean<PageBean<HealthArticleVO>> page(@RequestBody PageParam<HealthArticleQuery> param) {
-        PageBean<HealthArticleVO> pageBean = healthArticlesService.pageQuery(param);
+    public ResultBean<PageBean<HealthArticleReviewVO>> page(@RequestBody PageParam<HealthArticleQuery> param) {
+        PageBean<HealthArticleReviewVO> pageBean = healthArticlesService.pageQuery(param);
         return ResultBean.success(pageBean);
     }
     
     /**
-     * 根据ID获取健康文章详情
+     * 分页查询公开的健康文章（用户端接口）
+     * @param param 分页参数和查询条件
+     * @return 健康文章分页数据
+     */
+    @Operation(summary = "分页查询公开的健康文章（用户端）")
+    @PostMapping("/public/page")
+    public ResultBean<PageBean<HealthArticleVO>> publicPage(@RequestBody PageParam<HealthArticleQuery> param) {
+        PageBean<HealthArticleVO> pageBean = healthArticlesService.pagePublicArticles(param);
+        return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 根据ID获取健康文章详情（管理端接口）
      * @param id 文章ID
      * @return 健康文章详情
      */
@@ -91,6 +104,44 @@ public class HealthArticleController {
             }
         } catch (Exception e) {
             return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "文章更新过程中发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 审核健康文章
+     * @param id 文章ID
+     * @param status 审核状态（0:草稿 1:已发布 2:已下架 3:审核中 4:未通过审核）
+     * @return 操作结果
+     */
+    @Operation(summary = "审核健康文章")
+    @PutMapping("/{id}/review")
+    public ResultBean<String> reviewHealthArticle(@PathVariable Long id, @RequestParam Byte status) {
+        try {
+            // 验证状态值是否有效
+            if (status < 0 || status > 4) {
+                return ResultBean.fail(StatusCode.PARAMETER_ERROR, "无效的状态值，只允许设置为0(草稿)、1(已发布)、2(已下架)、3(审核中)或4(未通过审核)");
+            }
+            
+            HealthArticleUpdateDTO articleUpdateDTO = new HealthArticleUpdateDTO();
+            articleUpdateDTO.setId(id);
+            articleUpdateDTO.setStatus(status);
+            
+            boolean updated = healthArticlesService.updateHealthArticle(articleUpdateDTO);
+            if (updated) {
+                String statusText = "";
+                switch (status) {
+                    case 0: statusText = "已设为草稿"; break;
+                    case 1: statusText = "审核通过"; break;
+                    case 2: statusText = "已下架"; break;
+                    case 3: statusText = "设为审核中"; break;
+                    case 4: statusText = "审核不通过"; break;
+                }
+                return ResultBean.success("文章" + statusText);
+            } else {
+                return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "文章不存在或已被删除");
+            }
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "文章审核过程中发生错误: " + e.getMessage());
         }
     }
     
