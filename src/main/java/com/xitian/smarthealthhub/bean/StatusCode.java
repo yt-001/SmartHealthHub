@@ -26,6 +26,7 @@ public enum StatusCode {
     BUSINESS_ERROR(1002, "业务处理失败"),
     DATA_NOT_FOUND(1003, "数据不存在"),
     DATA_DUPLICATE(1004, "数据重复"),
+    PARAMETER_ERROR(1005, "参数错误"),
 
     // 用户相关
     USER_NOT_FOUND(2001, "用户不存在"),

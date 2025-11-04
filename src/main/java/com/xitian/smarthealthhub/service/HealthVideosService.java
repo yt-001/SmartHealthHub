@@ -15,11 +15,18 @@ import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 public interface HealthVideosService extends IService<HealthVideos> {
     
     /**
-     * 分页查询健康视频
+     * 分页查询健康视频（供管理端使用）
      * @param param 分页参数和查询条件
      * @return 健康视频分页数据
      */
     PageBean<HealthVideoVO> pageQuery(PageParam<HealthVideoQuery> param);
+    
+    /**
+     * 分页查询公开的健康视频（供用户端使用）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据
+     */
+    PageBean<HealthVideoVO> pagePublicVideos(PageParam<HealthVideoQuery> param);
     
     /**
      * 根据ID获取健康视频详情
@@ -27,6 +34,13 @@ public interface HealthVideosService extends IService<HealthVideos> {
      * @return 健康视频详情
      */
     HealthVideoVO getHealthVideoById(Long id);
+    
+    /**
+     * 根据ID获取公开的健康视频详情（供用户端使用）
+     * @param id 视频ID
+     * @return 健康视频详情
+     */
+    HealthVideoVO getPublicHealthVideoById(Long id);
     
     /**
      * 创建健康视频

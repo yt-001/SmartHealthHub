@@ -29,6 +29,7 @@ public class PermissionConfig {
         mapping.put("/health-videos/create", RoleCombination.DOCTOR_ONLY); // 创建视频（仅医生）
         mapping.put("/health-videos/update", RoleCombination.DOCTOR_ONLY); // 更新视频（仅医生）
         mapping.put("/health-videos/delete/**", RoleCombination.ADMIN_DOCTOR); // 删除视频（管理员和医生）
+        mapping.put("/health-videos/*/review", RoleCombination.ADMIN_ONLY); // 审核视频（仅管理员）
         
         // 健康视频评论接口权限控制
         mapping.put("/health-video-comments/page", RoleCombination.ALL); // 分页查询（所有角色）

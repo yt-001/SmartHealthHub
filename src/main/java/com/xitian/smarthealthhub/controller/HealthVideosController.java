@@ -28,28 +28,55 @@ public class HealthVideosController {
     private HealthVideosService healthVideosService;
 
     /**
-     * 分页查询健康视频
+     * 分页查询健康视频（管理端接口）
      * @param param 分页参数和查询条件
      * @return 健康视频分页数据
      */
-    @Operation(summary = "分页查询健康视频")
+    @Operation(summary = "分页查询健康视频（管理端）")
     @PostMapping("/page")
     public ResultBean<PageBean<HealthVideoVO>> page(@RequestBody PageParam<HealthVideoQuery> param) {
         PageBean<HealthVideoVO> pageBean = healthVideosService.pageQuery(param);
         return ResultBean.success(pageBean);
     }
+    
+    /**
+     * 分页查询公开的健康视频（用户端接口）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据
+     */
+    @Operation(summary = "分页查询公开的健康视频（用户端）")
+    @PostMapping("/public/page")
+    public ResultBean<PageBean<HealthVideoVO>> publicPage(@RequestBody PageParam<HealthVideoQuery> param) {
+        PageBean<HealthVideoVO> pageBean = healthVideosService.pagePublicVideos(param);
+        return ResultBean.success(pageBean);
+    }
 
     /**
-     * 根据ID获取健康视频详情
+     * 根据ID获取健康视频详情（管理端接口）
      * @param id 视频ID
      * @return 健康视频详情
      */
-    @Operation(summary = "根据ID获取健康视频详情")
+    @Operation(summary = "根据ID获取健康视频详情（管理端）")
     @GetMapping("/{id}/view")
     public ResultBean<HealthVideoVO> getHealthVideoById(@PathVariable Long id) {
         HealthVideoVO vo = healthVideosService.getHealthVideoById(id);
         if (vo == null) {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "视频不存在或已被删除");
+        }
+        return ResultBean.success(vo);
+    }
+    
+    /**
+     * 根据ID获取公开的健康视频详情（用户端接口）
+     * @param id 视频ID
+     * @return 健康视频详情
+     */
+    @Operation(summary = "根据ID获取公开的健康视频详情（用户端）")
+    @GetMapping("/public/{id}")
+    public ResultBean<HealthVideoVO> getPublicHealthVideoById(@PathVariable Long id) {
+        HealthVideoVO vo = healthVideosService.getPublicHealthVideoById(id);
+        if (vo == null) {
+            return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "视频不存在或未公开");
         }
         return ResultBean.success(vo);
     }
@@ -91,6 +118,37 @@ public class HealthVideosController {
             }
         } catch (Exception e) {
             return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "视频更新过程中发生错误: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 审核健康视频
+     * @param id 视频ID
+     * @param status 审核状态（1:通过 2:下架 4:不通过）
+     * @return 操作结果
+     */
+    @Operation(summary = "审核健康视频")
+    @PutMapping("/{id}/review")
+    public ResultBean<String> reviewHealthVideo(@PathVariable Long id, @RequestParam Byte status) {
+        try {
+            // 验证状态值是否有效
+            if (status != 1 && status != 2 && status != 4) {
+                return ResultBean.fail(StatusCode.PARAMETER_ERROR, "无效的状态值，只允许设置为1(通过)、2(下架)或4(不通过)");
+            }
+            
+            HealthVideoUpdateDTO videoUpdateDTO = new HealthVideoUpdateDTO();
+            videoUpdateDTO.setId(id);
+            videoUpdateDTO.setStatus(status);
+            
+            boolean updated = healthVideosService.updateHealthVideo(videoUpdateDTO);
+            if (updated) {
+                String statusText = status == 1 ? "审核通过" : (status == 2 ? "已下架" : "审核不通过");
+                return ResultBean.success("视频" + statusText);
+            } else {
+                return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "视频不存在或已被删除");
+            }
+        } catch (Exception e) {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "视频审核过程中发生错误: " + e.getMessage());
         }
     }
 

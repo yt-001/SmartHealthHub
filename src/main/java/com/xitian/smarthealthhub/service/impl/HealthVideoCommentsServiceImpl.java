@@ -9,20 +9,27 @@ import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.HealthVideoCommentConverter;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoCommentCreateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthVideoComments;
+import com.xitian.smarthealthhub.domain.entity.HealthVideos;
 import com.xitian.smarthealthhub.domain.query.HealthVideoCommentQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoCommentVO;
 import com.xitian.smarthealthhub.mapper.HealthVideoCommentsMapper;
+import com.xitian.smarthealthhub.mapper.HealthVideosMapper;
 import com.xitian.smarthealthhub.service.HealthVideoCommentsService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import jakarta.annotation.Resource;
+
 /**
  * 健康视频评论服务实现类
  */
 @Service
 public class HealthVideoCommentsServiceImpl extends ServiceImpl<HealthVideoCommentsMapper, HealthVideoComments> implements HealthVideoCommentsService {
+    
+    @Resource
+    private HealthVideosMapper healthVideosMapper;
     
     /**
      * 分页查询健康视频评论
@@ -89,6 +96,13 @@ public class HealthVideoCommentsServiceImpl extends ServiceImpl<HealthVideoComme
      */
     @Override
     public List<HealthVideoCommentVO> getCommentsByVideoId(Long videoId) {
+        // 检查视频是否存在且已发布
+        HealthVideos video = healthVideosMapper.selectById(videoId);
+        if (video == null || video.getIsDeleted() == 1 || video.getStatus() != 1) {
+            // 如果视频不存在、已删除或未发布，则不返回评论
+            return List.of();
+        }
+        
         LambdaQueryWrapper<HealthVideoComments> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(HealthVideoComments::getVideoId, videoId);
         queryWrapper.eq(HealthVideoComments::getStatus, (byte) 1); // 只查询显示状态的评论
@@ -120,6 +134,13 @@ public class HealthVideoCommentsServiceImpl extends ServiceImpl<HealthVideoComme
      */
     @Override
     public boolean createHealthVideoComment(HealthVideoCommentCreateDTO commentCreateDTO) {
+        // 检查视频是否存在且已发布
+        HealthVideos video = healthVideosMapper.selectById(commentCreateDTO.getVideoId());
+        if (video == null || video.getIsDeleted() == 1 || video.getStatus() != 1) {
+            // 如果视频不存在、已删除或未发布，则不允许评论
+            return false;
+        }
+        
         HealthVideoComments comment = new HealthVideoComments();
         comment.setVideoId(commentCreateDTO.getVideoId());
         comment.setUserId(commentCreateDTO.getUserId());

@@ -46,7 +46,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
     }
     
     /**
-     * 分页查询健康视频
+     * 分页查询健康视频（供管理端使用）
      * @param param 分页参数和查询条件
      * @return 健康视频分页数据
      */
@@ -57,6 +57,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
         
         // 构建查询条件
         LambdaQueryWrapper<HealthVideos> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(HealthVideos::getIsDeleted, (byte) 0); // 只查询未删除的视频
         
         // 如果有查询条件，则添加查询条件
         if (param.getQuery() != null) {
@@ -82,9 +83,76 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
                 queryWrapper.eq(HealthVideos::getIsTop, query.getIsTop());
             }
             
-            // 状态查询
+            // 状态查询 - 单个状态
             if (query.getStatus() != null) {
                 queryWrapper.eq(HealthVideos::getStatus, query.getStatus());
+            }
+            
+            // 状态查询 - 多个状态
+            if (query.getStatusList() != null && !query.getStatusList().isEmpty()) {
+                queryWrapper.in(HealthVideos::getStatus, query.getStatusList());
+            }
+            
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(query.getCreatedStart()) || StringUtils.hasText(query.getCreatedEnd())) {
+                if (StringUtils.hasText(query.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(query.getCreatedEnd())) {
+                    queryWrapper.apply("created_at <= {0}", query.getCreatedEnd() + " 23:59:59");
+                }
+            }
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(HealthVideos::getCreatedAt);
+        
+        // 执行分页查询
+        Page<HealthVideos> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为VO对象
+        List<HealthVideoVO> voList = HealthVideoConverter.toVOList(resultPage.getRecords());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    /**
+     * 分页查询公开的健康视频（供用户端使用）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据
+     */
+    public PageBean<HealthVideoVO> pagePublicVideos(PageParam<HealthVideoQuery> param) {
+        // 创建分页对象
+        Page<HealthVideos> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件 - 只查询已发布的视频
+        LambdaQueryWrapper<HealthVideos> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(HealthVideos::getIsDeleted, (byte) 0); // 只查询未删除的视频
+        queryWrapper.eq(HealthVideos::getStatus, (byte) 1); // 只查询已发布的视频
+        
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            HealthVideoQuery query = param.getQuery();
+            
+            // 视频标题模糊查询
+            if (StringUtils.hasText(query.getTitle())) {
+                queryWrapper.like(HealthVideos::getTitle, query.getTitle());
+            }
+            
+            // 作者姓名模糊查询
+            if (StringUtils.hasText(query.getAuthorName())) {
+                queryWrapper.like(HealthVideos::getAuthorName, query.getAuthorName());
+            }
+            
+            // 视频分类查询
+            if (StringUtils.hasText(query.getCategory())) {
+                queryWrapper.like(HealthVideos::getCategory, query.getCategory());
+            }
+            
+            // 是否置顶查询
+            if (query.getIsTop() != null) {
+                queryWrapper.eq(HealthVideos::getIsTop, query.getIsTop());
             }
             
             // 时间范围查询 - 创建时间
@@ -131,6 +199,25 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
     }
     
     /**
+     * 根据ID获取公开的健康视频详情（供用户端使用）
+     * @param id 视频ID
+     * @return 健康视频详情
+     */
+    public HealthVideoVO getPublicHealthVideoById(Long id) {
+        HealthVideos healthVideo = this.getById(id);
+        // 只有已发布的视频才能被公开访问
+        if (healthVideo == null || healthVideo.getIsDeleted() == 1 || healthVideo.getStatus() != 1) {
+            return null;
+        }
+        
+        // 增加浏览次数
+        healthVideo.setViewCount(healthVideo.getViewCount() + 1);
+        this.updateById(healthVideo);
+        
+        return HealthVideoConverter.toVO(healthVideo);
+    }
+    
+    /**
      * 创建健康视频
      * @param videoCreateDTO 视频创建信息
      * @return 操作结果
@@ -147,7 +234,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
                 .authorName(getAuthorName(videoCreateDTO.getAuthorId()))
                 .category(videoCreateDTO.getCategory())
                 .isTop(videoCreateDTO.getIsTop() != null ? videoCreateDTO.getIsTop() : (byte) 0)
-                .status(videoCreateDTO.getStatus() != null ? videoCreateDTO.getStatus() : (byte) 1)
+                .status(videoCreateDTO.getStatus() != null ? videoCreateDTO.getStatus() : (byte) 3) // 默认为审核中状态
                 .viewCount(0)
                 .likeCount(0)
                 .commentCount(0)

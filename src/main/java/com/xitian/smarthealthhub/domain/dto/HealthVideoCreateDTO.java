@@ -46,6 +46,6 @@ public class HealthVideoCreateDTO {
     @Schema(description = "是否置顶：0 否 1 是")
     private Byte isTop;
     
-    @Schema(description = "状态：0 草稿 1 已发布 2 已下架")
+    @Schema(description = "状态：0 草稿 1 已发布 2 已下架 3 审核中 4 未通过审核")
     private Byte status;
 }
