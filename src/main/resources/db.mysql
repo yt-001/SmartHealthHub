@@ -229,7 +229,7 @@ create table health_videos
     like_count      int      default 0                 not null comment '点赞次数',
     comment_count   int      default 0                 not null comment '评论次数',
     is_top          tinyint  default 0                 not null comment '是否置顶：0 否 1 是',
-    status          tinyint  default 1                 not null comment '状态：0 草稿 1 已发布 2 已下架 3 审核中 4 未通过审核',
+    status          tinyint  default 3                 not null comment '状态：0 草稿 1 已发布 2 已下架 3 审核中 4 未通过审核',
     is_deleted      tinyint  default 0                 not null comment '逻辑删除：0 正常 1 已删',
     created_at      datetime default CURRENT_TIMESTAMP null comment '创建时间',
     updated_at      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间',
@@ -249,6 +249,30 @@ create index idx_video_status
 
 create index idx_video_is_top
     on health_videos (is_top);
+
+create table carousel_items
+(
+    id              bigint                             not null comment '主键，雪花 ID'
+        primary key,
+    title           varchar(100)                       not null comment '轮播图标题',
+    description     varchar(500)                       null comment '轮播图描述',
+    image_url       varchar(255)                       not null comment '图片URL',
+    target_type     tinyint                            not null comment '跳转类型：0 无跳转 1 健康文章 2 健康视频 3 外部链接',
+    target_id       bigint                             null comment '跳转目标ID（文章ID/视频ID）',
+    target_url      varchar(255)                       null comment '跳转目标URL（外部链接）',
+    sort_order      int      default 0                 not null comment '排序字段，值越小越靠前',
+    status          tinyint  default 1                 not null comment '状态：0 隐藏 1 显示',
+    is_deleted      tinyint  default 0                 not null comment '逻辑删除：0 正常 1 已删',
+    created_at      datetime default CURRENT_TIMESTAMP null comment '创建时间',
+    updated_at      datetime default CURRENT_TIMESTAMP null on update CURRENT_TIMESTAMP comment '更新时间'
+)
+    comment '轮播图表';
+
+create index idx_carousel_items_status
+    on carousel_items (status);
+
+create index idx_carousel_items_sort
+    on carousel_items (sort_order);
 
 create table health_video_comments
 (

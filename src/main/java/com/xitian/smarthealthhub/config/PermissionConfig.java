@@ -29,7 +29,14 @@ public class PermissionConfig {
         mapping.put("/health-videos/update", RoleCombination.ADMIN_DOCTOR); // 更新健康视频（医生和管理员）
         mapping.put("/health-videos/review", RoleCombination.ADMIN_ONLY); // 审核健康视频（仅管理员）
         mapping.put("/health-videos/delete/*", RoleCombination.ADMIN_DOCTOR); // 删除健康视频（医生和管理员）
-        
+
+        // 轮播图管理接口权限映射
+        mapping.put("/carousel-items/page", RoleCombination.ADMIN_ONLY); // 分页查询轮播图（仅管理员）
+        mapping.put("/carousel-items/create", RoleCombination.ADMIN_ONLY); // 创建轮播图（仅管理员）
+        mapping.put("/carousel-items/update", RoleCombination.ADMIN_ONLY); // 更新轮播图（仅管理员）
+        mapping.put("/carousel-items/delete/*", RoleCombination.ADMIN_ONLY); // 删除轮播图（仅管理员）
+        mapping.put("/carousel-items/display", RoleCombination.ALL); // 查询显示的轮播图列表（所有用户）
+
         // 健康视频评论管理接口权限映射
         mapping.put("/health-video-comments/page", RoleCombination.ALL); // 分页查询（所有角色）
         mapping.put("/health-video-comments/video/*", RoleCombination.ALL); // 查看视频评论列表（所有角色）
