@@ -12,6 +12,7 @@ import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthArticles;
 import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
+import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 import com.xitian.smarthealthhub.mapper.HealthArticlesMapper;
@@ -108,7 +109,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
      * @param param 分页参数和查询条件
      * @return 健康文章分页数据
      */
-    public PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticleQuery> param) {
+    public PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticlePublicQuery> param) {
         // 创建分页对象
         Page<HealthArticles> page = new Page<>(param.getPageNum(), param.getPageSize());
         
@@ -119,7 +120,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
         
         // 如果有查询条件，则添加查询条件
         if (param.getQuery() != null) {
-            HealthArticleQuery query = param.getQuery();
+            HealthArticlePublicQuery query = param.getQuery();
             
             // 文章标题模糊查询
             if (StringUtils.hasText(query.getTitle())) {
@@ -141,14 +142,9 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 queryWrapper.like(HealthArticles::getCategory, query.getCategory());
             }
             
-            // 时间范围查询 - 创建时间
-            if (StringUtils.hasText(query.getCreatedStart()) || StringUtils.hasText(query.getCreatedEnd())) {
-                if (StringUtils.hasText(query.getCreatedStart())) {
-                    queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
-                }
-                if (StringUtils.hasText(query.getCreatedEnd())) {
-                    queryWrapper.apply("created_at < {0}", query.getCreatedEnd() + " 23:59:59");
-                }
+            // 是否置顶查询
+            if (query.getIsTop() != null) {
+                queryWrapper.eq(HealthArticles::getIsTop, query.getIsTop());
             }
         }
         

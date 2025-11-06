@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthArticles;
 import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
+import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 
@@ -30,7 +31,7 @@ public interface HealthArticlesService extends IService<HealthArticles> {
      * @param param 分页参数和查询条件
      * @return 健康文章分页数据
      */
-    PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticleQuery> param);
+    PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticlePublicQuery> param);
     
     /**
      * 根据ID获取健康文章详情

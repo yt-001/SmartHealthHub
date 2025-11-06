@@ -7,6 +7,7 @@ import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
+import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
@@ -47,7 +48,7 @@ public class HealthArticleController {
      */
     @Operation(summary = "分页查询公开的健康文章（用户端）")
     @PostMapping("/public/page")
-    public ResultBean<PageBean<HealthArticleVO>> publicPage(@RequestBody PageParam<HealthArticleQuery> param) {
+    public ResultBean<PageBean<HealthArticleVO>> publicPage(@RequestBody PageParam<HealthArticlePublicQuery> param) {
         PageBean<HealthArticleVO> pageBean = healthArticlesService.pagePublicArticles(param);
         return ResultBean.success(pageBean);
     }
