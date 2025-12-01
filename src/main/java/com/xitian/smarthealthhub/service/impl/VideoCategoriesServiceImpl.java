@@ -6,11 +6,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
+import com.xitian.smarthealthhub.converter.CategorySimpleConverter;
 import com.xitian.smarthealthhub.converter.VideoCategoriesConverter;
 import com.xitian.smarthealthhub.domain.dto.VideoCategoriesCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.VideoCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.VideoCategories;
 import com.xitian.smarthealthhub.domain.query.VideoCategoriesQuery;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.VideoCategoriesVO;
 import com.xitian.smarthealthhub.mapper.VideoCategoriesMapper;
 import com.xitian.smarthealthhub.service.VideoCategoriesService;
@@ -38,9 +40,6 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
         
         // 构建查询条件
         LambdaQueryWrapper<VideoCategories> queryWrapper = Wrappers.lambdaQuery();
-        
-        // 只查询未删除的分类
-        queryWrapper.eq(VideoCategories::getIsDeleted, (byte) 0);
         
         // 如果有查询条件，则添加查询条件
         if (param.getQuery() != null) {
@@ -72,13 +71,44 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     }
     
     /**
+     * 获取所有启用的视频分类（简化信息）
+     * @return 视频分类简化信息列表
+     */
+    @Override
+    public List<CategorySimpleVO> getAllEnabledCategoriesSimple() {
+        LambdaQueryWrapper<VideoCategories> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(VideoCategories::getIsEnabled, (byte) 1);
+        queryWrapper.orderByAsc(VideoCategories::getSortOrder);
+        List<VideoCategories> categoriesList = this.list(queryWrapper);
+        return CategorySimpleConverter.fromVideoCategoryList(categoriesList);
+    }
+    
+    /**
+     * 根据ID列表获取视频分类（简化信息）
+     * @param ids 分类ID列表
+     * @return 视频分类简化信息列表
+     */
+    @Override
+    public List<CategorySimpleVO> getVideoCategoriesSimpleByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        
+        LambdaQueryWrapper<VideoCategories> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(VideoCategories::getId, ids);
+        queryWrapper.eq(VideoCategories::getIsEnabled, (byte) 1);
+        queryWrapper.orderByAsc(VideoCategories::getSortOrder);
+        List<VideoCategories> categoriesList = this.list(queryWrapper);
+        return CategorySimpleConverter.fromVideoCategoryList(categoriesList);
+    }
+    
+    /**
      * 获取所有启用的视频分类
      * @return 视频分类列表
      */
     @Override
     public List<VideoCategoriesVO> getAllEnabledCategories() {
         LambdaQueryWrapper<VideoCategories> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.eq(VideoCategories::getIsDeleted, (byte) 0);
         queryWrapper.eq(VideoCategories::getIsEnabled, (byte) 1);
         queryWrapper.orderByAsc(VideoCategories::getSortOrder);
         List<VideoCategories> categoriesList = this.list(queryWrapper);
@@ -93,7 +123,7 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     @Override
     public VideoCategoriesVO getVideoCategoryById(Long id) {
         VideoCategories videoCategory = this.getById(id);
-        if (videoCategory == null || videoCategory.getIsDeleted() == 1) {
+        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
             return null;
         }
         return VideoCategoriesConverter.toVO(videoCategory);
@@ -111,7 +141,6 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
         videoCategory.setDescription(videoCategoriesCreateDTO.getDescription());
         videoCategory.setSortOrder(videoCategoriesCreateDTO.getSortOrder() != null ? videoCategoriesCreateDTO.getSortOrder() : 0);
         videoCategory.setIsEnabled(videoCategoriesCreateDTO.getIsEnabled() != null ? videoCategoriesCreateDTO.getIsEnabled() : (byte) 1);
-        videoCategory.setIsDeleted((byte) 0);
         videoCategory.setCreatedAt(LocalDateTime.now());
         videoCategory.setUpdatedAt(LocalDateTime.now());
         
@@ -126,7 +155,7 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     @Override
     public boolean updateVideoCategory(VideoCategoriesUpdateDTO videoCategoriesUpdateDTO) {
         VideoCategories videoCategory = this.getById(videoCategoriesUpdateDTO.getId());
-        if (videoCategory == null || videoCategory.getIsDeleted() == 1) {
+        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
             return false;
         }
         
@@ -147,11 +176,11 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     @Override
     public boolean deleteVideoCategory(Long id) {
         VideoCategories videoCategory = this.getById(id);
-        if (videoCategory == null || videoCategory.getIsDeleted() == 1) {
+        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
             return false;
         }
         
-        videoCategory.setIsDeleted((byte) 1);
+        videoCategory.setIsEnabled((byte) 0);
         videoCategory.setUpdatedAt(LocalDateTime.now());
         
         return this.updateById(videoCategory);

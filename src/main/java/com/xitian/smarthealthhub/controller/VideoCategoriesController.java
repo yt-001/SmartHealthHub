@@ -7,6 +7,7 @@ import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.domain.dto.VideoCategoriesCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.VideoCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.VideoCategoriesQuery;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.VideoCategoriesVO;
 import com.xitian.smarthealthhub.service.VideoCategoriesService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +39,17 @@ public class VideoCategoriesController {
     public ResultBean<PageBean<VideoCategoriesVO>> page(@RequestBody PageParam<VideoCategoriesQuery> param) {
         PageBean<VideoCategoriesVO> pageBean = videoCategoriesService.pageQuery(param);
         return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 获取所有启用的视频分类（简化信息）
+     * @return 视频分类简化信息列表
+     */
+    @Operation(summary = "获取所有启用的视频分类（简化信息）")
+    @GetMapping("/simple-list")
+    public ResultBean<List<CategorySimpleVO>> getAllEnabledCategoriesSimple() {
+        List<CategorySimpleVO> categories = videoCategoriesService.getAllEnabledCategoriesSimple();
+        return ResultBean.success(categories);
     }
     
     /**

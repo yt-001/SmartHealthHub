@@ -8,15 +8,19 @@ import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
 import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
+import com.xitian.smarthealthhub.service.CategoryRelationService;
+import com.xitian.smarthealthhub.service.ArticleCategoriesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import java.util.List;
 
 /**
  * 健康文章控制器
@@ -28,6 +32,12 @@ public class HealthArticleController {
     
     @Resource
     private HealthArticlesService healthArticlesService;
+    
+    @Resource
+    private CategoryRelationService categoryRelationService;
+    
+    @Resource
+    private ArticleCategoriesService articleCategoriesService;
     
     /**
      * 分页查询健康文章（管理端接口）
@@ -54,6 +64,19 @@ public class HealthArticleController {
     }
     
     /**
+     * 根据作者ID分页查询健康文章
+     * @param authorId 作者ID
+     * @param param 分页参数
+     * @return 健康文章分页数据
+     */
+    @Operation(summary = "根据作者ID分页查询健康文章")
+    @PostMapping("/author/{authorId}/page")
+    public ResultBean<PageBean<HealthArticleVO>> pageByAuthorId(@PathVariable Long authorId, @RequestBody PageParam<Void> param) {
+        PageBean<HealthArticleVO> pageBean = healthArticlesService.pagePublicArticlesByAuthorId(authorId, param);
+        return ResultBean.success(pageBean);
+    }
+    
+    /**
      * 根据ID获取健康文章详情（管理端接口）
      * @param id 文章ID
      * @return 健康文章详情
@@ -66,6 +89,19 @@ public class HealthArticleController {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "文章不存在或已被删除");
         }
         return ResultBean.success(vo);
+    }
+    
+    /**
+     * 获取文章关联的分类ID列表
+     * @param id 文章ID
+     * @return 分类ID列表
+     */
+    @Operation(summary = "获取文章关联的分类ID列表")
+    @GetMapping("/article-category-relations/article/{id}")
+    public ResultBean<List<CategorySimpleVO>> getArticleCategoryIds(@PathVariable Long id) {
+        List<Long> categoryIds = categoryRelationService.getArticleCategoryIds(id);
+        List<CategorySimpleVO> categorySimpleVOs = articleCategoriesService.getArticleCategoriesSimpleByIds(categoryIds);
+        return ResultBean.success(categorySimpleVOs);
     }
     
     /**

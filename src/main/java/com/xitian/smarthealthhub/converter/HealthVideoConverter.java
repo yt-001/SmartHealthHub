@@ -32,7 +32,6 @@ public class HealthVideoConverter {
         vo.setDuration(healthVideos.getDuration());
         vo.setAuthorId(healthVideos.getAuthorId());
         vo.setAuthorName(healthVideos.getAuthorName());
-        vo.setCategory(healthVideos.getCategory());
         vo.setViewCount(healthVideos.getViewCount());
         vo.setLikeCount(healthVideos.getLikeCount());
         vo.setCommentCount(healthVideos.getCommentCount());

@@ -27,6 +27,11 @@ public class HealthArticleReviewVO {
     private String title;
     
     /**
+     * 文章摘要
+     */
+    private String summary;
+    
+    /**
      * 作者姓名
      */
     private String authorName;
@@ -35,11 +40,6 @@ public class HealthArticleReviewVO {
      * 科室名称
      */
     private String deptName;
-
-    /**
-     * 文章分类/标签
-     */
-    private String category;
 
     /**
      * 浏览次数

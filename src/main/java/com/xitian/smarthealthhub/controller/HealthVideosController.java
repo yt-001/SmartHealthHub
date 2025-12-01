@@ -7,15 +7,19 @@ import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
 import com.xitian.smarthealthhub.service.HealthVideosService;
+import com.xitian.smarthealthhub.service.CategoryRelationService;
+import com.xitian.smarthealthhub.service.VideoCategoriesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import java.util.List;
 
 /**
  * 健康视频控制器
@@ -27,6 +31,12 @@ public class HealthVideosController {
 
     @Resource
     private HealthVideosService healthVideosService;
+    
+    @Resource
+    private CategoryRelationService categoryRelationService;
+    
+    @Resource
+    private VideoCategoriesService videoCategoriesService;
 
     /**
      * 分页查询健康视频（管理端接口）
@@ -49,6 +59,19 @@ public class HealthVideosController {
     @PostMapping("/public/page")
     public ResultBean<PageBean<HealthVideoVO>> publicPage(@RequestBody PageParam<HealthVideoQuery> param) {
         PageBean<HealthVideoVO> pageBean = healthVideosService.pagePublicVideos(param);
+        return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 根据作者ID分页查询健康视频
+     * @param authorId 作者ID
+     * @param param 分页参数
+     * @return 健康视频分页数据
+     */
+    @Operation(summary = "根据作者ID分页查询健康视频")
+    @PostMapping("/author/{authorId}/page")
+    public ResultBean<PageBean<HealthVideoVO>> pageByAuthorId(@PathVariable Long authorId, @RequestBody PageParam<Void> param) {
+        PageBean<HealthVideoVO> pageBean = healthVideosService.pagePublicVideosByAuthorId(authorId, param);
         return ResultBean.success(pageBean);
     }
 
@@ -80,6 +103,19 @@ public class HealthVideosController {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND, "视频不存在或未公开");
         }
         return ResultBean.success(vo);
+    }
+    
+    /**
+     * 获取视频关联的分类ID列表
+     * @param id 视频ID
+     * @return 分类ID列表
+     */
+    @Operation(summary = "获取视频关联的分类ID列表")
+    @GetMapping("/video-category-relations/video/{id}")
+    public ResultBean<List<CategorySimpleVO>> getVideoCategoryIds(@PathVariable Long id) {
+        List<Long> categoryIds = categoryRelationService.getVideoCategoryIds(id);
+        List<CategorySimpleVO> categorySimpleVOs = videoCategoriesService.getVideoCategoriesSimpleByIds(categoryIds);
+        return ResultBean.success(categorySimpleVOs);
     }
 
     /**

@@ -7,11 +7,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.ArticleCategoriesConverter;
+import com.xitian.smarthealthhub.converter.CategorySimpleConverter;
 import com.xitian.smarthealthhub.domain.dto.ArticleCategoriesCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.ArticleCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.ArticleCategories;
 import com.xitian.smarthealthhub.domain.query.ArticleCategoriesQuery;
 import com.xitian.smarthealthhub.domain.vo.ArticleCategoriesVO;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.mapper.ArticleCategoriesMapper;
 import com.xitian.smarthealthhub.service.ArticleCategoriesService;
 import org.springframework.stereotype.Service;
@@ -38,9 +40,6 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
         
         // 构建查询条件
         LambdaQueryWrapper<ArticleCategories> queryWrapper = Wrappers.lambdaQuery();
-        
-        // 只查询未删除的分类
-        queryWrapper.eq(ArticleCategories::getIsDeleted, (byte) 0);
         
         // 如果有查询条件，则添加查询条件
         if (param.getQuery() != null) {
@@ -72,13 +71,44 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     }
     
     /**
+     * 获取所有启用的文章分类（简化信息）
+     * @return 文章分类简化信息列表
+     */
+    @Override
+    public List<CategorySimpleVO> getAllEnabledCategoriesSimple() {
+        LambdaQueryWrapper<ArticleCategories> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(ArticleCategories::getIsEnabled, (byte) 1);
+        queryWrapper.orderByAsc(ArticleCategories::getSortOrder);
+        List<ArticleCategories> categoriesList = this.list(queryWrapper);
+        return CategorySimpleConverter.fromArticleCategoryList(categoriesList);
+    }
+    
+    /**
+     * 根据ID列表获取文章分类（简化信息）
+     * @param ids 分类ID列表
+     * @return 文章分类简化信息列表
+     */
+    @Override
+    public List<CategorySimpleVO> getArticleCategoriesSimpleByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        
+        LambdaQueryWrapper<ArticleCategories> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.in(ArticleCategories::getId, ids);
+        queryWrapper.eq(ArticleCategories::getIsEnabled, (byte) 1);
+        queryWrapper.orderByAsc(ArticleCategories::getSortOrder);
+        List<ArticleCategories> categoriesList = this.list(queryWrapper);
+        return CategorySimpleConverter.fromArticleCategoryList(categoriesList);
+    }
+    
+    /**
      * 获取所有启用的文章分类
      * @return 文章分类列表
      */
     @Override
     public List<ArticleCategoriesVO> getAllEnabledCategories() {
         LambdaQueryWrapper<ArticleCategories> queryWrapper = Wrappers.lambdaQuery();
-        queryWrapper.eq(ArticleCategories::getIsDeleted, (byte) 0);
         queryWrapper.eq(ArticleCategories::getIsEnabled, (byte) 1);
         queryWrapper.orderByAsc(ArticleCategories::getSortOrder);
         List<ArticleCategories> categoriesList = this.list(queryWrapper);
@@ -93,7 +123,7 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     @Override
     public ArticleCategoriesVO getArticleCategoryById(Long id) {
         ArticleCategories articleCategory = this.getById(id);
-        if (articleCategory == null || articleCategory.getIsDeleted() == 1) {
+        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
             return null;
         }
         return ArticleCategoriesConverter.toVO(articleCategory);
@@ -111,7 +141,6 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
         articleCategory.setDescription(articleCategoriesCreateDTO.getDescription());
         articleCategory.setSortOrder(articleCategoriesCreateDTO.getSortOrder() != null ? articleCategoriesCreateDTO.getSortOrder() : 0);
         articleCategory.setIsEnabled(articleCategoriesCreateDTO.getIsEnabled() != null ? articleCategoriesCreateDTO.getIsEnabled() : (byte) 1);
-        articleCategory.setIsDeleted((byte) 0);
         articleCategory.setCreatedAt(LocalDateTime.now());
         articleCategory.setUpdatedAt(LocalDateTime.now());
         
@@ -126,7 +155,7 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     @Override
     public boolean updateArticleCategory(ArticleCategoriesUpdateDTO articleCategoriesUpdateDTO) {
         ArticleCategories articleCategory = this.getById(articleCategoriesUpdateDTO.getId());
-        if (articleCategory == null || articleCategory.getIsDeleted() == 1) {
+        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
             return false;
         }
         
@@ -147,11 +176,11 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     @Override
     public boolean deleteArticleCategory(Long id) {
         ArticleCategories articleCategory = this.getById(id);
-        if (articleCategory == null || articleCategory.getIsDeleted() == 1) {
+        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
             return false;
         }
         
-        articleCategory.setIsDeleted((byte) 1);
+        articleCategory.setIsEnabled((byte) 0);
         articleCategory.setUpdatedAt(LocalDateTime.now());
         
         return this.updateById(articleCategory);

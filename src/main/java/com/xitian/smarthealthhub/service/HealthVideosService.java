@@ -30,6 +30,14 @@ public interface HealthVideosService extends IService<HealthVideos> {
     PageBean<HealthVideoVO> pagePublicVideos(PageParam<HealthVideoQuery> param);
     
     /**
+     * 根据作者ID分页查询公开的健康视频
+     * @param authorId 作者ID
+     * @param param 分页参数
+     * @return 健康视频分页数据
+     */
+    PageBean<HealthVideoVO> pagePublicVideosByAuthorId(Long authorId, PageParam<Void> param);
+    
+    /**
      * 根据ID获取健康视频详情
      * @param id 视频ID
      * @return 健康视频详情

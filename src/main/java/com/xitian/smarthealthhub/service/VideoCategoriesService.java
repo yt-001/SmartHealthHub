@@ -7,6 +7,7 @@ import com.xitian.smarthealthhub.domain.dto.VideoCategoriesCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.VideoCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.VideoCategories;
 import com.xitian.smarthealthhub.domain.query.VideoCategoriesQuery;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.VideoCategoriesVO;
 
 import java.util.List;
@@ -22,6 +23,19 @@ public interface VideoCategoriesService extends IService<VideoCategories> {
      * @return 视频分类分页数据
      */
     PageBean<VideoCategoriesVO> pageQuery(PageParam<VideoCategoriesQuery> param);
+    
+    /**
+     * 获取所有启用的视频分类（简化信息）
+     * @return 视频分类简化信息列表
+     */
+    List<CategorySimpleVO> getAllEnabledCategoriesSimple();
+    
+    /**
+     * 根据ID列表获取视频分类（简化信息）
+     * @param ids 分类ID列表
+     * @return 视频分类简化信息列表
+     */
+    List<CategorySimpleVO> getVideoCategoriesSimpleByIds(List<Long> ids);
     
     /**
      * 获取所有启用的视频分类

@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.ArticleCategoriesCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.ArticleCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.query.ArticleCategoriesQuery;
 import com.xitian.smarthealthhub.domain.vo.ArticleCategoriesVO;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.service.ArticleCategoriesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,6 +39,17 @@ public class ArticleCategoriesController {
     public ResultBean<PageBean<ArticleCategoriesVO>> page(@RequestBody PageParam<ArticleCategoriesQuery> param) {
         PageBean<ArticleCategoriesVO> pageBean = articleCategoriesService.pageQuery(param);
         return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 获取所有启用的文章分类（简化信息）
+     * @return 文章分类简化信息列表
+     */
+    @Operation(summary = "获取所有启用的文章分类（简化信息）")
+    @GetMapping("/simple-list")
+    public ResultBean<List<CategorySimpleVO>> getAllEnabledCategoriesSimple() {
+        List<CategorySimpleVO> categories = articleCategoriesService.getAllEnabledCategoriesSimple();
+        return ResultBean.success(categories);
     }
     
     /**

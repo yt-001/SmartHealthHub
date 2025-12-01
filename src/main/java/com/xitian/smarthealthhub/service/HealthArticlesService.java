@@ -34,6 +34,14 @@ public interface HealthArticlesService extends IService<HealthArticles> {
     PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticlePublicQuery> param);
     
     /**
+     * 根据作者ID分页查询公开的健康文章
+     * @param authorId 作者ID
+     * @param param 分页参数
+     * @return 健康文章分页数据
+     */
+    PageBean<HealthArticleVO> pagePublicArticlesByAuthorId(Long authorId, PageParam<Void> param);
+    
+    /**
      * 根据ID获取健康文章详情
      * @param id 文章ID
      * @return 健康文章详情

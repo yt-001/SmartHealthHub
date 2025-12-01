@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.ArticleCategoriesUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.ArticleCategories;
 import com.xitian.smarthealthhub.domain.query.ArticleCategoriesQuery;
 import com.xitian.smarthealthhub.domain.vo.ArticleCategoriesVO;
+import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 
 import java.util.List;
 
@@ -22,6 +23,19 @@ public interface ArticleCategoriesService extends IService<ArticleCategories> {
      * @return 文章分类分页数据
      */
     PageBean<ArticleCategoriesVO> pageQuery(PageParam<ArticleCategoriesQuery> param);
+    
+    /**
+     * 获取所有启用的文章分类（简化信息）
+     * @return 文章分类简化信息列表
+     */
+    List<CategorySimpleVO> getAllEnabledCategoriesSimple();
+    
+    /**
+     * 根据ID列表获取文章分类（简化信息）
+     * @param ids 分类ID列表
+     * @return 文章分类简化信息列表
+     */
+    List<CategorySimpleVO> getArticleCategoriesSimpleByIds(List<Long> ids);
     
     /**
      * 获取所有启用的文章分类

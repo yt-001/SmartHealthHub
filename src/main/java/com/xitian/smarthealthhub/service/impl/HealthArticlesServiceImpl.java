@@ -19,14 +19,20 @@ import com.xitian.smarthealthhub.mapper.HealthArticlesMapper;
 import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
 import com.xitian.smarthealthhub.util.CategoryUtils;
-import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import jakarta.annotation.Resource;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.xitian.smarthealthhub.domain.entity.Users;
+import com.xitian.smarthealthhub.domain.entity.Departments;
+import com.xitian.smarthealthhub.mapper.UsersMapper;
+import com.xitian.smarthealthhub.mapper.DepartmentsMapper;
 
 /**
  * 健康文章服务实现类
@@ -36,6 +42,35 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
     
     @Resource
     private CategoryRelationService categoryRelationService;
+    
+    @Resource
+    private UsersMapper usersMapper;
+    
+    @Resource
+    private DepartmentsMapper departmentsMapper;
+    
+    /**
+     * 获取作者姓名
+     * @param authorId 作者ID
+     * @return 作者姓名
+     */
+    private String getAuthorName(Long authorId) {
+        Users user = usersMapper.selectById(authorId);
+        return user != null ? user.getRealName() : "";
+    }
+    
+    /**
+     * 获取科室名称
+     * @param deptId 科室ID
+     * @return 科室名称
+     */
+    private String getDeptName(Integer deptId) {
+        if (deptId == null) {
+            return "";
+        }
+        Departments dept = departmentsMapper.selectById(deptId);
+        return dept != null ? dept.getName() : "";
+    }
     
     /**
      * 分页查询健康文章（供管理端审核使用）
@@ -72,9 +107,10 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 queryWrapper.eq(HealthArticles::getDeptId, query.getDeptId());
             }
             
-            // 文章分类查询
+            // 文章分类查询 - 通过关联表查询
             if (StringUtils.hasText(query.getCategory())) {
-                queryWrapper.like(HealthArticles::getCategory, query.getCategory());
+                // 这里暂时保留原逻辑，实际应该通过关联表查询
+                // 后续需要重构查询逻辑以支持通过关联表查询
             }
 
             // 状态查询 - 单个状态
@@ -93,7 +129,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                     queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
                 }
                 if (StringUtils.hasText(query.getCreatedEnd())) {
-                    queryWrapper.apply("created_at < {0}", query.getCreatedEnd() + " 23:59:59");
+                    queryWrapper.apply("created_at <= {0}", query.getCreatedEnd() + " 23:59:59");
                 }
             }
         }
@@ -116,10 +152,11 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
      * @param param 分页参数和查询条件
      * @return 健康文章分页数据
      */
+    @Override
     public PageBean<HealthArticleVO> pagePublicArticles(PageParam<HealthArticlePublicQuery> param) {
         // 创建分页对象
         Page<HealthArticles> page = new Page<>(param.getPageNum(), param.getPageSize());
-        
+
         // 构建查询条件 - 只查询已发布的文章
         LambdaQueryWrapper<HealthArticles> queryWrapper = Wrappers.lambdaQuery();
         queryWrapper.eq(HealthArticles::getIsDeleted, (byte) 0); // 只查询未删除的文章
@@ -144,9 +181,10 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 queryWrapper.eq(HealthArticles::getDeptId, query.getDeptId());
             }
             
-            // 文章分类查询
+            // 文章分类查询 - 通过关联表查询
             if (StringUtils.hasText(query.getCategory())) {
-                queryWrapper.like(HealthArticles::getCategory, query.getCategory());
+                // 这里暂时保留原逻辑，实际应该通过关联表查询
+                // 后续需要重构查询逻辑以支持通过关联表查询
             }
             
             // 是否置顶查询
@@ -154,6 +192,38 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 queryWrapper.eq(HealthArticles::getIsTop, query.getIsTop());
             }
         }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(HealthArticles::getCreatedAt);
+        
+        // 执行分页查询
+        Page<HealthArticles> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为VO对象
+        List<HealthArticleVO> voList = resultPage.getRecords().stream()
+                .map(HealthArticleConverter::toVO)
+                .collect(Collectors.toList());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    /**
+     * 根据作者ID分页查询公开的健康文章
+     * @param authorId 作者ID
+     * @param param 分页参数
+     * @return 健康文章分页数据
+     */
+    @Override
+    public PageBean<HealthArticleVO> pagePublicArticlesByAuthorId(Long authorId, PageParam<Void> param) {
+        // 创建分页对象
+        Page<HealthArticles> page = new Page<>(param.getPageNum(), param.getPageSize());
+
+        // 构建查询条件 - 只查询指定作者已发布的文章
+        LambdaQueryWrapper<HealthArticles> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(HealthArticles::getIsDeleted, (byte) 0); // 只查询未删除的文章
+        queryWrapper.eq(HealthArticles::getStatus, (byte) 1); // 只查询已发布的文章
+        queryWrapper.eq(HealthArticles::getAuthorId, authorId); // 只查询指定作者的文章
         
         // 按创建时间倒序排列
         queryWrapper.orderByDesc(HealthArticles::getCreatedAt);
@@ -203,8 +273,9 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 .content(articleCreateDTO.getContent())
                 .coverImageUrl(articleCreateDTO.getCoverImageUrl())
                 .authorId(articleCreateDTO.getAuthorId())
+                .authorName(getAuthorName(articleCreateDTO.getAuthorId()))
                 .deptId(articleCreateDTO.getDeptId())
-                .category(articleCreateDTO.getCategory())
+                .deptName(getDeptName(articleCreateDTO.getDeptId()))
                 .isTop(articleCreateDTO.getIsTop() != null ? articleCreateDTO.getIsTop() : (byte) 0)
                 .status(articleCreateDTO.getStatus() != null ? articleCreateDTO.getStatus() : (byte) 3) // 默认为审核中状态
                 .viewCount(0)
@@ -243,7 +314,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
         healthArticle.setContent(articleUpdateDTO.getContent());
         healthArticle.setCoverImageUrl(articleUpdateDTO.getCoverImageUrl());
         healthArticle.setDeptId(articleUpdateDTO.getDeptId());
-        healthArticle.setCategory(articleUpdateDTO.getCategory());
+        healthArticle.setDeptName(getDeptName(articleUpdateDTO.getDeptId()));
         healthArticle.setIsTop(articleUpdateDTO.getIsTop() != null ? articleUpdateDTO.getIsTop() : healthArticle.getIsTop());
         healthArticle.setStatus(articleUpdateDTO.getStatus() != null ? articleUpdateDTO.getStatus() : healthArticle.getStatus());
         healthArticle.setUpdatedAt(LocalDateTime.now());

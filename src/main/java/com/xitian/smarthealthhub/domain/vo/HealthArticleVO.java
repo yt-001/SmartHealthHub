@@ -58,11 +58,6 @@ public class HealthArticleVO extends BaseVO {
     private String deptName;
     
     /**
-     * 文章分类/标签（JSON格式存储分类ID列表）
-     */
-    private String category;
-    
-    /**
      * 浏览次数
      */
     private Integer viewCount;

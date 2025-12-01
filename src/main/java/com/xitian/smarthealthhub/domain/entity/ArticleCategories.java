@@ -40,11 +40,6 @@ public class ArticleCategories {
     @TableField("is_enabled")
     private Byte isEnabled;
     
-    @Schema(description = "逻辑删除：0 正常 1 已删")
-    @TableLogic
-    @TableField("is_deleted")
-    private Byte isDeleted;
-    
     @Schema(description = "创建时间")
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
