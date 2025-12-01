@@ -159,6 +159,15 @@ public class SecurityConfig {
             return new AuthorizationDecision(authentication.isAuthenticated());
         }
         
+        // 检查用户是否是管理员（管理员可以访问所有接口）
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        
+        if (isAdmin) {
+            // 管理员可以访问所有接口
+            return new AuthorizationDecision(true);
+        }
+        
         // 检查用户是否具有所需角色之一
         boolean hasRole = Arrays.stream(requiredRoles)
                 .anyMatch(role -> authentication.getAuthorities().stream()

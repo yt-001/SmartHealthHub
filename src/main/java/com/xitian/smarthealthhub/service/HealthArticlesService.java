@@ -11,6 +11,7 @@ import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
 import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthArticleAdminVO;
 
 import java.util.List;
 
@@ -25,6 +26,13 @@ public interface HealthArticlesService extends IService<HealthArticles> {
      * @return 健康文章分页数据
      */
     PageBean<HealthArticleReviewVO> pageQuery(PageParam<HealthArticleQuery> param);
+    
+    /**
+     * 分页查询健康文章（供管理员使用，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康文章分页数据（包含分类信息）
+     */
+    PageBean<HealthArticleAdminVO> pageQueryWithCategories(PageParam<HealthArticleQuery> param);
     
     /**
      * 分页查询公开的健康文章（供用户端使用）

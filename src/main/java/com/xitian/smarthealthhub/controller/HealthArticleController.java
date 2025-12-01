@@ -11,6 +11,7 @@ import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthArticleAdminVO;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
 import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.ArticleCategoriesService;
@@ -48,6 +49,18 @@ public class HealthArticleController {
     @PostMapping("/page")
     public ResultBean<PageBean<HealthArticleReviewVO>> page(@RequestBody PageParam<HealthArticleQuery> param) {
         PageBean<HealthArticleReviewVO> pageBean = healthArticlesService.pageQuery(param);
+        return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 分页查询健康文章（管理员接口，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康文章分页数据（包含分类信息）
+     */
+    @Operation(summary = "分页查询健康文章（管理员，含分类）")
+    @PostMapping("/admin/page")
+    public ResultBean<PageBean<HealthArticleAdminVO>> pageWithCategories(@RequestBody PageParam<HealthArticleQuery> param) {
+        PageBean<HealthArticleAdminVO> pageBean = healthArticlesService.pageQueryWithCategories(param);
         return ResultBean.success(pageBean);
     }
     

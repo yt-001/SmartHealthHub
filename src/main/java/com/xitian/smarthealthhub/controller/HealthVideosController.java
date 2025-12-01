@@ -10,6 +10,7 @@ import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.CategorySimpleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoAdminVO;
 import com.xitian.smarthealthhub.service.HealthVideosService;
 import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.VideoCategoriesService;
@@ -47,6 +48,18 @@ public class HealthVideosController {
     @PostMapping("/page")
     public ResultBean<PageBean<HealthVideoReviewVO>> page(@RequestBody PageParam<HealthVideoQuery> param) {
         PageBean<HealthVideoReviewVO> pageBean = healthVideosService.pageQuery(param);
+        return ResultBean.success(pageBean);
+    }
+    
+    /**
+     * 分页查询健康视频（管理员接口，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据（包含分类信息）
+     */
+    @Operation(summary = "分页查询健康视频（管理员，含分类）")
+    @PostMapping("/admin/page")
+    public ResultBean<PageBean<HealthVideoAdminVO>> pageWithCategories(@RequestBody PageParam<HealthVideoQuery> param) {
+        PageBean<HealthVideoAdminVO> pageBean = healthVideosService.pageQueryWithCategories(param);
         return ResultBean.success(pageBean);
     }
     

@@ -8,15 +8,18 @@ import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.HealthVideoConverter;
 import com.xitian.smarthealthhub.converter.HealthVideoReviewConverter;
+import com.xitian.smarthealthhub.converter.HealthVideoAdminConverter;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthVideoUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthVideos;
 import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoAdminVO;
 import com.xitian.smarthealthhub.mapper.HealthVideosMapper;
 import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.HealthVideosService;
+import com.xitian.smarthealthhub.service.VideoCategoriesService;
 import com.xitian.smarthealthhub.util.CategoryUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +45,9 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
     
     @Resource
     private CategoryRelationService categoryRelationService;
+    
+    @Resource
+    private com.xitian.smarthealthhub.service.VideoCategoriesService videoCategoriesService;
     
     /**
      * 获取作者姓名
@@ -121,6 +127,79 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
         
         // 转换为VO对象
         List<HealthVideoReviewVO> voList = HealthVideoReviewConverter.toReviewVOList(resultPage.getRecords());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    /**
+     * 分页查询健康视频（供管理员使用，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据（包含分类信息）
+     */
+    @Override
+    public PageBean<HealthVideoAdminVO> pageQueryWithCategories(PageParam<HealthVideoQuery> param) {
+        // 创建分页对象
+        Page<HealthVideos> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<HealthVideos> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(HealthVideos::getIsDeleted, (byte) 0); // 只查询未删除的视频
+        
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            HealthVideoQuery query = param.getQuery();
+            
+            // 视频标题模糊查询
+            if (StringUtils.hasText(query.getTitle())) {
+                queryWrapper.like(HealthVideos::getTitle, query.getTitle());
+            }
+            
+            // 作者姓名模糊查询
+            if (StringUtils.hasText(query.getAuthorName())) {
+                queryWrapper.like(HealthVideos::getAuthorName, query.getAuthorName());
+            }
+            
+            // 视频分类查询 - 通过关联表查询
+            if (StringUtils.hasText(query.getCategory())) {
+                // 这里暂时保留原逻辑，实际应该通过关联表查询
+                // 后续需要重构查询逻辑以支持通过关联表查询
+            }
+            
+            // 是否置顶查询
+            if (query.getIsTop() != null) {
+                queryWrapper.eq(HealthVideos::getIsTop, query.getIsTop());
+            }
+            
+            // 状态查询 - 单个状态
+            if (query.getStatus() != null) {
+                queryWrapper.eq(HealthVideos::getStatus, query.getStatus());
+            }
+            
+            // 状态查询 - 多个状态
+            if (query.getStatusList() != null && !query.getStatusList().isEmpty()) {
+                queryWrapper.in(HealthVideos::getStatus, query.getStatusList());
+            }
+            
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(query.getCreatedStart()) || StringUtils.hasText(query.getCreatedEnd())) {
+                if (StringUtils.hasText(query.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(query.getCreatedEnd())) {
+                    queryWrapper.apply("created_at <= {0}", query.getCreatedEnd() + " 23:59:59");
+                }
+            }
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(HealthVideos::getCreatedAt);
+        
+        // 执行分页查询
+        Page<HealthVideos> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为VO对象（包含分类信息）
+        List<HealthVideoAdminVO> voList = HealthVideoAdminConverter.toAdminVOList(resultPage.getRecords(), categoryRelationService, videoCategoriesService);
         
         // 构造并返回PageBean
         return PageBean.of(voList, resultPage.getTotal(), param);

@@ -9,6 +9,7 @@ import com.xitian.smarthealthhub.domain.entity.HealthVideos;
 import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthVideoAdminVO;
 
 /**
  * 健康视频服务接口
@@ -21,6 +22,13 @@ public interface HealthVideosService extends IService<HealthVideos> {
      * @return 健康视频分页数据
      */
     PageBean<HealthVideoReviewVO> pageQuery(PageParam<HealthVideoQuery> param);
+    
+    /**
+     * 分页查询健康视频（供管理员使用，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康视频分页数据（包含分类信息）
+     */
+    PageBean<HealthVideoAdminVO> pageQueryWithCategories(PageParam<HealthVideoQuery> param);
     
     /**
      * 分页查询公开的健康视频（供用户端使用）

@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.bean.PageBean;
 import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.HealthArticleConverter;
 import com.xitian.smarthealthhub.converter.HealthArticleReviewConverter;
+import com.xitian.smarthealthhub.converter.HealthArticleAdminConverter;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleCreateDTO;
 import com.xitian.smarthealthhub.domain.dto.HealthArticleUpdateDTO;
 import com.xitian.smarthealthhub.domain.entity.HealthArticles;
@@ -15,7 +16,9 @@ import com.xitian.smarthealthhub.domain.query.HealthArticleQuery;
 import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
+import com.xitian.smarthealthhub.domain.vo.HealthArticleAdminVO;
 import com.xitian.smarthealthhub.mapper.HealthArticlesMapper;
+import com.xitian.smarthealthhub.service.ArticleCategoriesService;
 import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
 import com.xitian.smarthealthhub.util.CategoryUtils;
@@ -48,6 +51,9 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
     
     @Resource
     private DepartmentsMapper departmentsMapper;
+    
+    @Resource
+    private ArticleCategoriesService articleCategoriesService;
     
     /**
      * 获取作者姓名
@@ -142,6 +148,81 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
         
         // 转换为VO对象
         List<HealthArticleReviewVO> voList = HealthArticleReviewConverter.toReviewVOList(resultPage.getRecords());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), param);
+    }
+    
+    /**
+     * 分页查询健康文章（供管理员使用，包含分类信息）
+     * @param param 分页参数和查询条件
+     * @return 健康文章分页数据（包含分类信息）
+     */
+    @Override
+    public PageBean<HealthArticleAdminVO> pageQueryWithCategories(PageParam<HealthArticleQuery> param) {
+        // 创建分页对象
+        Page<HealthArticles> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<HealthArticles> queryWrapper = Wrappers.lambdaQuery();
+        
+        // 只查询未删除的文章
+        queryWrapper.eq(HealthArticles::getIsDeleted, (byte) 0);
+        
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            HealthArticleQuery query = param.getQuery();
+            
+            // 文章标题模糊查询
+            if (StringUtils.hasText(query.getTitle())) {
+                queryWrapper.like(HealthArticles::getTitle, query.getTitle());
+            }
+            
+            // 作者姓名模糊查询
+            if (StringUtils.hasText(query.getAuthorName())) {
+                queryWrapper.like(HealthArticles::getAuthorName, query.getAuthorName());
+            }
+            
+            // 科室ID精确查询
+            if (query.getDeptId() != null) {
+                queryWrapper.eq(HealthArticles::getDeptId, query.getDeptId());
+            }
+            
+            // 文章分类查询 - 通过关联表查询
+            if (StringUtils.hasText(query.getCategory())) {
+                // 这里暂时保留原逻辑，实际应该通过关联表查询
+                // 后续需要重构查询逻辑以支持通过关联表查询
+            }
+
+            // 状态查询 - 单个状态
+            if (query.getStatus() != null) {
+                queryWrapper.eq(HealthArticles::getStatus, query.getStatus());
+            }
+
+            // 状态查询 - 多个状态
+            if (query.getStatusList() != null && !query.getStatusList().isEmpty()) {
+                queryWrapper.in(HealthArticles::getStatus, query.getStatusList());
+            }
+
+            // 时间范围查询 - 创建时间
+            if (StringUtils.hasText(query.getCreatedStart()) || StringUtils.hasText(query.getCreatedEnd())) {
+                if (StringUtils.hasText(query.getCreatedStart())) {
+                    queryWrapper.apply("created_at >= {0}", query.getCreatedStart() + " 00:00:00");
+                }
+                if (StringUtils.hasText(query.getCreatedEnd())) {
+                    queryWrapper.apply("created_at <= {0}", query.getCreatedEnd() + " 23:59:59");
+                }
+            }
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(HealthArticles::getCreatedAt);
+        
+        // 执行分页查询
+        Page<HealthArticles> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为VO对象（包含分类信息）
+        List<HealthArticleAdminVO> voList = HealthArticleAdminConverter.toAdminVOList(resultPage.getRecords(), categoryRelationService, articleCategoriesService);
         
         // 构造并返回PageBean
         return PageBean.of(voList, resultPage.getTotal(), param);
