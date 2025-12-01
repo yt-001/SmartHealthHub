@@ -123,7 +123,7 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     @Override
     public VideoCategoriesVO getVideoCategoryById(Long id) {
         VideoCategories videoCategory = this.getById(id);
-        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
+        if (videoCategory == null) {
             return null;
         }
         return VideoCategoriesConverter.toVO(videoCategory);
@@ -155,7 +155,7 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     @Override
     public boolean updateVideoCategory(VideoCategoriesUpdateDTO videoCategoriesUpdateDTO) {
         VideoCategories videoCategory = this.getById(videoCategoriesUpdateDTO.getId());
-        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
+        if (videoCategory == null) {
             return false;
         }
         
@@ -169,20 +169,17 @@ public class VideoCategoriesServiceImpl extends ServiceImpl<VideoCategoriesMappe
     }
     
     /**
-     * 删除视频分类（逻辑删除）
+     * 删除视频分类（物理删除）
      * @param id 分类ID
      * @return 操作结果
      */
     @Override
     public boolean deleteVideoCategory(Long id) {
         VideoCategories videoCategory = this.getById(id);
-        if (videoCategory == null || videoCategory.getIsEnabled() == 0) {
+        if (videoCategory == null) {
             return false;
         }
         
-        videoCategory.setIsEnabled((byte) 0);
-        videoCategory.setUpdatedAt(LocalDateTime.now());
-        
-        return this.updateById(videoCategory);
+        return this.removeById(videoCategory.getId());
     }
 }

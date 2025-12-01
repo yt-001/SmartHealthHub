@@ -123,7 +123,7 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     @Override
     public ArticleCategoriesVO getArticleCategoryById(Long id) {
         ArticleCategories articleCategory = this.getById(id);
-        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
+        if (articleCategory == null) {
             return null;
         }
         return ArticleCategoriesConverter.toVO(articleCategory);
@@ -155,7 +155,7 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     @Override
     public boolean updateArticleCategory(ArticleCategoriesUpdateDTO articleCategoriesUpdateDTO) {
         ArticleCategories articleCategory = this.getById(articleCategoriesUpdateDTO.getId());
-        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
+        if (articleCategory == null) {
             return false;
         }
         
@@ -169,20 +169,17 @@ public class ArticleCategoriesServiceImpl extends ServiceImpl<ArticleCategoriesM
     }
     
     /**
-     * 删除文章分类（逻辑删除）
+     * 删除文章分类（物理删除）
      * @param id 分类ID
      * @return 操作结果
      */
     @Override
     public boolean deleteArticleCategory(Long id) {
         ArticleCategories articleCategory = this.getById(id);
-        if (articleCategory == null || articleCategory.getIsEnabled() == 0) {
+        if (articleCategory == null) {
             return false;
         }
         
-        articleCategory.setIsEnabled((byte) 0);
-        articleCategory.setUpdatedAt(LocalDateTime.now());
-        
-        return this.updateById(articleCategory);
+        return this.removeById(articleCategory.getId());
     }
 }
