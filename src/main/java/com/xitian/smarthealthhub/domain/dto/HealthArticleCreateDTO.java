@@ -38,8 +38,7 @@ public class HealthArticleCreateDTO {
     @Schema(description = "科室ID")
     private Integer deptId;
     
-    @Schema(description = "文章分类/标签")
-    @Size(max = 50, message = "文章分类长度不能超过50个字符")
+    @Schema(description = "文章分类/标签（JSON格式存储分类ID列表）")
     private String category;
     
     @Schema(description = "是否置顶：0 否 1 是")

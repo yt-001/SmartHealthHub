@@ -15,8 +15,11 @@ import com.xitian.smarthealthhub.domain.query.HealthVideoQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoVO;
 import com.xitian.smarthealthhub.domain.vo.HealthVideoReviewVO;
 import com.xitian.smarthealthhub.mapper.HealthVideosMapper;
+import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.HealthVideosService;
+import com.xitian.smarthealthhub.util.CategoryUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import jakarta.annotation.Resource;
@@ -36,6 +39,9 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
     
     @Resource
     private UsersMapper usersMapper;
+    
+    @Resource
+    private CategoryRelationService categoryRelationService;
     
     /**
      * 获取作者姓名
@@ -225,6 +231,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
      * @return 操作结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean createHealthVideo(HealthVideoCreateDTO videoCreateDTO) {
         HealthVideos healthVideo = HealthVideos.builder()
                 .title(videoCreateDTO.getTitle())
@@ -245,7 +252,15 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
                 .updatedAt(LocalDateTime.now())
                 .build();
         
-        return this.save(healthVideo);
+        boolean saved = this.save(healthVideo);
+        
+        // 如果视频保存成功且有分类ID列表，则保存分类关联关系
+        if (saved && videoCreateDTO.getCategory() != null && !videoCreateDTO.getCategory().isEmpty()) {
+            List<Long> categoryIds = CategoryUtils.parseCategoryIdsFromJson(videoCreateDTO.getCategory());
+            categoryRelationService.saveVideoCategoryRelations(healthVideo.getId(), categoryIds);
+        }
+        
+        return saved;
     }
     
     /**
@@ -254,6 +269,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
      * @return 操作结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateHealthVideo(HealthVideoUpdateDTO videoUpdateDTO) {
         HealthVideos healthVideo = this.getById(videoUpdateDTO.getId());
         if (healthVideo == null || healthVideo.getIsDeleted() == 1) {
@@ -270,7 +286,15 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
         healthVideo.setStatus(videoUpdateDTO.getStatus() != null ? videoUpdateDTO.getStatus() : healthVideo.getStatus());
         healthVideo.setUpdatedAt(LocalDateTime.now());
         
-        return this.updateById(healthVideo);
+        boolean updated = this.updateById(healthVideo);
+        
+        // 如果视频更新成功且有分类ID列表，则更新分类关联关系
+        if (updated && videoUpdateDTO.getCategory() != null) {
+            List<Long> categoryIds = CategoryUtils.parseCategoryIdsFromJson(videoUpdateDTO.getCategory());
+            categoryRelationService.saveVideoCategoryRelations(healthVideo.getId(), categoryIds);
+        }
+        
+        return updated;
     }
     
     /**

@@ -21,6 +21,7 @@ public class HealthArticleConverter {
         
         HealthArticleVO vo = new HealthArticleVO();
         BeanUtils.copyProperties(healthArticles, vo);
+        vo.setCategory(healthArticles.getCategory());
         return vo;
     }
     

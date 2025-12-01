@@ -71,7 +71,7 @@ public class HealthArticles extends BaseEntity {
     private String deptName;
     
     /**
-     * 文章分类/标签
+     * 文章分类/标签（JSON格式存储分类ID列表）
      */
     @TableField("category")
     private String category;

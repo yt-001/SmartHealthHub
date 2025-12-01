@@ -63,7 +63,7 @@ public class HealthVideos extends BaseEntity {
     private String authorName;
     
     /**
-     * 视频分类/标签
+     * 视频分类/标签（JSON格式存储分类ID列表）
      */
     @TableField("category")
     private String category;

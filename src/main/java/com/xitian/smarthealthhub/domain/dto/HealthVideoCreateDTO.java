@@ -39,8 +39,7 @@ public class HealthVideoCreateDTO {
     @NotNull(message = "作者ID不能为空")
     private Long authorId;
     
-    @Schema(description = "视频分类/标签")
-    @Size(max = 50, message = "视频分类长度不能超过50个字符")
+    @Schema(description = "视频分类/标签（JSON格式存储分类ID列表）")
     private String category;
     
     @Schema(description = "是否置顶：0 否 1 是")

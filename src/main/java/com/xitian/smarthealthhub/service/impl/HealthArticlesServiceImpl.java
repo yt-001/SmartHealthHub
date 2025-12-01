@@ -16,8 +16,12 @@ import com.xitian.smarthealthhub.domain.query.HealthArticlePublicQuery;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleVO;
 import com.xitian.smarthealthhub.domain.vo.HealthArticleReviewVO;
 import com.xitian.smarthealthhub.mapper.HealthArticlesMapper;
+import com.xitian.smarthealthhub.service.CategoryRelationService;
 import com.xitian.smarthealthhub.service.HealthArticlesService;
+import com.xitian.smarthealthhub.util.CategoryUtils;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
@@ -29,6 +33,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper, HealthArticles> implements HealthArticlesService {
+    
+    @Resource
+    private CategoryRelationService categoryRelationService;
     
     /**
      * 分页查询健康文章（供管理端审核使用）
@@ -188,6 +195,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
      * @return 操作结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean createHealthArticle(HealthArticleCreateDTO articleCreateDTO) {
         HealthArticles healthArticle = HealthArticles.builder()
                 .title(articleCreateDTO.getTitle())
@@ -206,7 +214,15 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 .updatedAt(LocalDateTime.now())
                 .build();
         
-        return this.save(healthArticle);
+        boolean saved = this.save(healthArticle);
+        
+        // 如果文章保存成功且有分类ID列表，则保存分类关联关系
+        if (saved && articleCreateDTO.getCategory() != null && !articleCreateDTO.getCategory().isEmpty()) {
+            List<Long> categoryIds = CategoryUtils.parseCategoryIdsFromJson(articleCreateDTO.getCategory());
+            categoryRelationService.saveArticleCategoryRelations(healthArticle.getId(), categoryIds);
+        }
+        
+        return saved;
     }
     
     /**
@@ -215,6 +231,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
      * @return 操作结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateHealthArticle(HealthArticleUpdateDTO articleUpdateDTO) {
         HealthArticles healthArticle = this.getById(articleUpdateDTO.getId());
         if (healthArticle == null || healthArticle.getIsDeleted() == 1) {
@@ -231,7 +248,15 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
         healthArticle.setStatus(articleUpdateDTO.getStatus() != null ? articleUpdateDTO.getStatus() : healthArticle.getStatus());
         healthArticle.setUpdatedAt(LocalDateTime.now());
         
-        return this.updateById(healthArticle);
+        boolean updated = this.updateById(healthArticle);
+        
+        // 如果文章更新成功且有分类ID列表，则更新分类关联关系
+        if (updated && articleUpdateDTO.getCategory() != null) {
+            List<Long> categoryIds = CategoryUtils.parseCategoryIdsFromJson(articleUpdateDTO.getCategory());
+            categoryRelationService.saveArticleCategoryRelations(healthArticle.getId(), categoryIds);
+        }
+        
+        return updated;
     }
     
     /**
