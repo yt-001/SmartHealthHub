@@ -3,9 +3,11 @@ package com.xitian.smarthealthhub.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
-import com.xitian.smarthealthhub.converter.MedicalRecordsConverter;
+import com.xitian.smarthealthhub.converter.MedicalRecordDetailConverter;
+import com.xitian.smarthealthhub.converter.MedicalRecordListItemConverter;
 import com.xitian.smarthealthhub.domain.entity.MedicalRecords;
-import com.xitian.smarthealthhub.domain.vo.MedicalRecordsVO;
+import com.xitian.smarthealthhub.domain.vo.MedicalRecordDetailVO;
+import com.xitian.smarthealthhub.domain.vo.MedicalRecordListItemVO;
 import com.xitian.smarthealthhub.service.MedicalRecordsService;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
@@ -20,49 +22,45 @@ public class MedicalRecordsController {
     private MedicalRecordsService medicalRecordsService;
 
     /**
-     * 根据ID获取病例历史信息
+     * 根据ID获取病例历史信息（详情页）
      * @param id 病例历史ID
      * @return 病例历史信息
      */
     @GetMapping("/{id}")
-    public ResultBean<MedicalRecordsVO> getMedicalRecordById(@PathVariable Long id) {
+    public ResultBean<MedicalRecordDetailVO> getMedicalRecordById(@PathVariable Long id) {
         MedicalRecords medicalRecords = medicalRecordsService.getById(id);
         if (medicalRecords == null) {
             return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
         }
-        MedicalRecordsVO vo = MedicalRecordsConverter.toVO(medicalRecords);
+        MedicalRecordDetailVO vo = MedicalRecordDetailConverter.toVO(medicalRecords);
         return ResultBean.success(vo);
     }
 
     /**
-     * 根据患者ID获取所有病例历史
+     * 根据患者ID获取所有病例历史（列表页）
      * @param userId 患者ID
      * @return 病例历史列表
      */
     @GetMapping("/user/{userId}")
-    public ResultBean<List<MedicalRecordsVO>> getMedicalRecordsByUserId(@PathVariable Long userId) {
+    public ResultBean<List<MedicalRecordListItemVO>> getMedicalRecordsByUserId(@PathVariable Long userId) {
         LambdaQueryWrapper<MedicalRecords> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(MedicalRecords::getUserId, userId);
         List<MedicalRecords> medicalRecordsList = medicalRecordsService.list(queryWrapper);
-        List<MedicalRecordsVO> voList = medicalRecordsList.stream()
-                .map(MedicalRecordsConverter::toVO)
-                .collect(Collectors.toList());
+        List<MedicalRecordListItemVO> voList = MedicalRecordListItemConverter.toVOList(medicalRecordsList);
         return ResultBean.success(voList);
     }
 
     /**
-     * 根据医生ID获取所有病例历史
+     * 根据医生ID获取所有病例历史（列表页）
      * @param doctorId 医生ID
      * @return 病例历史列表
      */
     @GetMapping("/doctor/{doctorId}")
-    public ResultBean<List<MedicalRecordsVO>> getMedicalRecordsByDoctorId(@PathVariable Long doctorId) {
+    public ResultBean<List<MedicalRecordListItemVO>> getMedicalRecordsByDoctorId(@PathVariable Long doctorId) {
         LambdaQueryWrapper<MedicalRecords> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(MedicalRecords::getDoctorId, doctorId);
         List<MedicalRecords> medicalRecordsList = medicalRecordsService.list(queryWrapper);
-        List<MedicalRecordsVO> voList = medicalRecordsList.stream()
-                .map(MedicalRecordsConverter::toVO)
-                .collect(Collectors.toList());
+        List<MedicalRecordListItemVO> voList = MedicalRecordListItemConverter.toVOList(medicalRecordsList);
         return ResultBean.success(voList);
     }
 
