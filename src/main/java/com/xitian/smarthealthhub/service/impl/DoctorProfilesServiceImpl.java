@@ -249,4 +249,15 @@ public class DoctorProfilesServiceImpl extends ServiceImpl<DoctorProfilesMapper,
         // 构造并返回PageBean
         return PageBean.of(voList, voList.size(), param);
     }
+    
+    @Override
+    public DoctorProfiles getByUserId(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        
+        LambdaQueryWrapper<DoctorProfiles> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(DoctorProfiles::getUserId, userId);
+        return this.getOne(queryWrapper);
+    }
 }

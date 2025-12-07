@@ -44,6 +44,21 @@ public class PermissionConfig {
         mapping.put("/health-video-comments/create", RoleCombination.ALL); // 创建评论（所有角色）
         mapping.put("/health-video-comments/delete/**", RoleCombination.ALL); // 删除评论（管理员、用户和医生）
         
+        // 预约挂号接口权限映射（对所有身份开放）
+        mapping.put("/appointments/page", RoleCombination.ALL); // 分页查询预约（所有角色）
+        mapping.put("/appointments/*", RoleCombination.ALL); // 根据ID获取预约详情（所有角色）
+        mapping.put("/appointments/patient/*", RoleCombination.ALL); // 根据患者ID获取预约列表（所有角色）
+        mapping.put("/appointments/schedule/*", RoleCombination.ALL); // 根据医生排班ID获取预约列表（所有角色）
+        mapping.put("/appointments/create", RoleCombination.ALL); // 创建预约（所有角色）
+        mapping.put("/appointments/*/status", RoleCombination.ALL); // 更新预约状态（所有角色）
+        mapping.put("/appointments/delete/*", RoleCombination.ALL); // 删除预约（所有角色）
+
+        // 医生排班接口权限映射
+        mapping.put("/schedule/calendar", RoleCombination.ALL); // 获取医生排班日历信息（所有角色）
+        mapping.put("/schedule/doctor/*", RoleCombination.ALL); // 根据医生ID获取医生排班信息（所有角色）
+        mapping.put("/schedule/create", RoleCombination.ADMIN_DOCTOR); // 创建医生排班（医生和管理员）
+        mapping.put("/schedule/doctor-dept-list", RoleCombination.ALL); // 获取医生科室信息列表（所有角色）
+
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
         
@@ -55,9 +70,6 @@ public class PermissionConfig {
         
         // 医生接口（管理员和医生可以访问）
         mapping.put("/doctor/**", RoleCombination.ADMIN_DOCTOR);
-        
-        // 排班接口（医生和管理员可以访问）
-        mapping.put("/schedule/**", RoleCombination.ADMIN_DOCTOR);
         
         // 管理员专属接口
         mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);

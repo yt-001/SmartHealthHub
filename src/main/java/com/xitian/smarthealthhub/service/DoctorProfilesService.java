@@ -25,4 +25,11 @@ public interface DoctorProfilesService extends IService<DoctorProfiles> {
      * @return 医生信息分页列表
      */
     PageBean<DoctorPageVO> page(PageParam<DoctorPageQuery> param);
+    
+    /**
+     * 根据用户ID获取医生档案信息
+     * @param userId 用户ID
+     * @return 医生档案信息
+     */
+    DoctorProfiles getByUserId(Long userId);
 }
