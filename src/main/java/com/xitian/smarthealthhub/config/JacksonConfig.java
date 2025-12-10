@@ -1,9 +1,12 @@
 package com.xitian.smarthealthhub.config;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
@@ -11,6 +14,7 @@ import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilde
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -52,6 +56,23 @@ public class JacksonConfig {
             
             // 8. 配置字段可见性，支持字段的序列化和反序列化
             builder.visibility(FIELD, ANY);
+            
+            // 9. Long类型序列化为字符串，防止前端精度丢失
+            builder.serializerByType(Long.class, new JsonSerializer<Long>() {
+                @Override
+                public void serialize(Long value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                    if (value != null) {
+                        gen.writeString(value.toString());
+                    }
+                }
+            });
+            
+            builder.serializerByType(Long.TYPE, new JsonSerializer<Long>() {
+                @Override
+                public void serialize(Long value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+                    gen.writeString(value.toString());
+                }
+            });
         };
     }
 }

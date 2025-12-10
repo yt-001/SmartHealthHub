@@ -15,6 +15,7 @@ import com.xitian.smarthealthhub.domain.entity.Users;
 import com.xitian.smarthealthhub.domain.query.AppointmentQuery;
 import com.xitian.smarthealthhub.domain.vo.AppointmentDetailVO;
 import com.xitian.smarthealthhub.domain.vo.AppointmentVO;
+import com.xitian.smarthealthhub.domain.vo.AppointmentWithPatientVO;
 import com.xitian.smarthealthhub.mapper.AppointmentMapper;
 import com.xitian.smarthealthhub.service.AppointmentService;
 import com.xitian.smarthealthhub.service.DepartmentsService;
@@ -22,6 +23,7 @@ import com.xitian.smarthealthhub.service.DoctorProfilesService;
 import com.xitian.smarthealthhub.service.DoctorSchedulesService;
 import com.xitian.smarthealthhub.service.UsersService;
 import com.xitian.smarthealthhub.util.RegistrationNoGenerator;
+import com.xitian.smarthealthhub.converter.AppointmentWithPatientConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -58,9 +60,21 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
         // 获取查询条件
         AppointmentQuery query = param.getQuery();
         if (query != null) {
-            // 根据医生ID查询
+            // 根据医生ID查询（需要先查询医生排班表获取scheduleId）
             if (query.getDoctorId() != null) {
-                queryWrapper.eq(Appointment::getScheduleId, query.getDoctorId());
+                List<DoctorSchedules> schedules = doctorSchedulesService.list(
+                    new LambdaQueryWrapper<DoctorSchedules>()
+                        .eq(DoctorSchedules::getDoctorId, query.getDoctorId())
+                );
+                if (schedules.isEmpty()) {
+                    // 如果没有找到排班信息，则构造一个不可能的条件
+                    queryWrapper.eq(Appointment::getId, -1);
+                } else {
+                    List<Long> scheduleIds = schedules.stream()
+                            .map(DoctorSchedules::getId)
+                            .collect(Collectors.toList());
+                    queryWrapper.in(Appointment::getScheduleId, scheduleIds);
+                }
             }
             
             // 根据患者ID查询
@@ -191,6 +205,71 @@ public class AppointmentServiceImpl extends ServiceImpl<AppointmentMapper, Appoi
         appointment.setUpdatedAt(LocalDateTime.now());
         
         return this.updateById(appointment);
+    }
+    
+    @Override
+    public PageBean<AppointmentWithPatientVO> pageAppointmentsWithPatientInfo(PageParam<AppointmentQuery> param) {
+        // 创建分页对象
+        Page<Appointment> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<Appointment> queryWrapper = Wrappers.lambdaQuery();
+        
+        // 获取查询条件
+        AppointmentQuery query = param.getQuery();
+        if (query != null) {
+            // 根据医生ID查询（需要先查询医生排班表获取scheduleId）
+            if (query.getDoctorId() != null) {
+                List<DoctorSchedules> schedules = doctorSchedulesService.list(
+                    new LambdaQueryWrapper<DoctorSchedules>()
+                        .eq(DoctorSchedules::getDoctorId, query.getDoctorId())
+                );
+                if (schedules.isEmpty()) {
+                    // 如果没有找到排班信息，则构造一个不可能的条件
+                    queryWrapper.eq(Appointment::getId, -1);
+                } else {
+                    List<Long> scheduleIds = schedules.stream()
+                            .map(DoctorSchedules::getId)
+                            .collect(Collectors.toList());
+                    queryWrapper.in(Appointment::getScheduleId, scheduleIds);
+                }
+            }
+            
+            // 根据患者ID查询
+            if (query.getPatientId() != null) {
+                queryWrapper.eq(Appointment::getPatientId, query.getPatientId());
+            }
+            
+            // 根据状态查询
+            if (query.getStatus() != null) {
+                queryWrapper.eq(Appointment::getStatus, query.getStatus());
+            }
+            
+            // 根据创建时间范围查询
+            if (query.getStartTime() != null) {
+                queryWrapper.ge(Appointment::getCreatedAt, query.getStartTime());
+            }
+            if (query.getEndTime() != null) {
+                queryWrapper.le(Appointment::getCreatedAt, query.getEndTime());
+            }
+        }
+        
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(Appointment::getCreatedAt);
+        
+        // 执行分页查询
+        Page<Appointment> resultPage = this.page(page, queryWrapper);
+        
+        // 转换为带患者信息的VO对象
+        List<AppointmentWithPatientVO> voList = resultPage.getRecords().stream()
+                .map(appointment -> {
+                    Users patientUser = usersService.getById(appointment.getPatientId());
+                    return AppointmentWithPatientConverter.toVO(appointment, patientUser);
+                })
+                .collect(Collectors.toList());
+        
+        // 构造并返回PageBean
+        return PageBean.of(voList, resultPage.getTotal(), (PageParam) param);
     }
     
     /**

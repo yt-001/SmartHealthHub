@@ -9,6 +9,7 @@ import com.xitian.smarthealthhub.domain.entity.Appointment;
 import com.xitian.smarthealthhub.domain.query.AppointmentQuery;
 import com.xitian.smarthealthhub.domain.vo.AppointmentDetailVO;
 import com.xitian.smarthealthhub.domain.vo.AppointmentVO;
+import com.xitian.smarthealthhub.domain.vo.AppointmentWithPatientVO;
 
 import java.util.List;
 
@@ -23,6 +24,13 @@ public interface AppointmentService extends IService<Appointment> {
      * @return 预约信息分页结果
      */
     PageBean<AppointmentVO> pageAppointments(PageParam<AppointmentQuery> param);
+    
+    /**
+     * 分页查询预约信息（包含患者信息）
+     * @param param 分页参数和查询条件
+     * @return 预约信息分页结果（包含患者信息）
+     */
+    PageBean<AppointmentWithPatientVO> pageAppointmentsWithPatientInfo(PageParam<AppointmentQuery> param);
     
     /**
      * 根据ID获取预约详情

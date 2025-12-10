@@ -59,6 +59,9 @@ public class PermissionConfig {
         mapping.put("/schedule/create", RoleCombination.ADMIN_DOCTOR); // 创建医生排班（医生和管理员）
         mapping.put("/schedule/doctor-dept-list", RoleCombination.ALL); // 获取医生科室信息列表（所有角色）
 
+        // 管理员医生分页查询接口（对所有身份开放）
+        mapping.put("/admin/doctors/page", RoleCombination.ALL); // 分页查询医生信息（所有角色）
+
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
         

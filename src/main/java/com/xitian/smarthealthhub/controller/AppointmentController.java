@@ -8,6 +8,7 @@ import com.xitian.smarthealthhub.domain.dto.AppointmentCreateDTO;
 import com.xitian.smarthealthhub.domain.query.AppointmentQuery;
 import com.xitian.smarthealthhub.domain.vo.AppointmentDetailVO;
 import com.xitian.smarthealthhub.domain.vo.AppointmentVO;
+import com.xitian.smarthealthhub.domain.vo.AppointmentWithPatientVO;
 import com.xitian.smarthealthhub.service.AppointmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -84,7 +85,7 @@ public class AppointmentController {
      */
     @Operation(summary = "根据医生ID获取预约列表")
     @PostMapping("/doctor/{doctorId}/page")
-    public ResultBean<PageBean<AppointmentVO>> getAppointmentsByDoctorId(
+    public ResultBean<PageBean<AppointmentWithPatientVO>> getAppointmentsByDoctorId(
             @PathVariable @NotNull(message = "医生ID不能为空") Long doctorId,
             @Valid @RequestBody PageParam<AppointmentQuery> param) {
         // 确保查询条件中包含医生ID
@@ -93,7 +94,7 @@ public class AppointmentController {
         }
         param.getQuery().setDoctorId(doctorId);
         
-        PageBean<AppointmentVO> result = appointmentService.pageAppointments(param);
+        PageBean<AppointmentWithPatientVO> result = appointmentService.pageAppointmentsWithPatientInfo(param);
         return ResultBean.success(result);
     }
     
