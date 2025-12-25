@@ -74,6 +74,18 @@ public class PermissionConfig {
         // 医生接口（管理员和医生可以访问）
         mapping.put("/doctor/**", RoleCombination.ADMIN_DOCTOR);
         
+        // 药品分类接口（对所有角色开放）
+        mapping.put("/medicine-categories/page", RoleCombination.ALL); // 分页查询药品分类（所有角色）
+        mapping.put("/medicine-categories/**", RoleCombination.ALL); // 其他药品分类操作（所有角色）
+        
+        // 药品信息接口（对所有角色开放）
+        mapping.put("/medicines/page", RoleCombination.ALL); // 分页查询药品信息（所有角色）
+        mapping.put("/medicines/**", RoleCombination.ALL); // 其他药品信息操作（所有角色）
+        
+        // 药品分类关联接口（对所有角色开放）
+        mapping.put("/medicine-category-relations/page", RoleCombination.ALL); // 分页查询药品分类关联（所有角色）
+        mapping.put("/medicine-category-relations/**", RoleCombination.ALL); // 其他药品分类关联操作（所有角色）
+        
         // 管理员专属接口
         mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
         
