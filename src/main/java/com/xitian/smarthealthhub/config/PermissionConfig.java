@@ -78,13 +78,25 @@ public class PermissionConfig {
         mapping.put("/medicine-categories/page", RoleCombination.ALL); // 分页查询药品分类（所有角色）
         mapping.put("/medicine-categories/**", RoleCombination.ALL); // 其他药品分类操作（所有角色）
         
+        // 药品分类接口（API前缀，对所有角色开放）
+        mapping.put("/api/medicine-categories/page", RoleCombination.ALL); // API前缀的分页查询药品分类（所有角色）
+        mapping.put("/api/medicine-categories/**", RoleCombination.ALL); // API前缀的其他药品分类操作（所有角色）
+        
         // 药品信息接口（对所有角色开放）
         mapping.put("/medicines/page", RoleCombination.ALL); // 分页查询药品信息（所有角色）
         mapping.put("/medicines/**", RoleCombination.ALL); // 其他药品信息操作（所有角色）
         
+        // 药品信息接口（API前缀，对所有角色开放）
+        mapping.put("/api/medicines/page", RoleCombination.ALL); // API前缀的分页查询药品信息（所有角色）
+        mapping.put("/api/medicines/**", RoleCombination.ALL); // API前缀的其他药品信息操作（所有角色）
+        
         // 药品分类关联接口（对所有角色开放）
         mapping.put("/medicine-category-relations/page", RoleCombination.ALL); // 分页查询药品分类关联（所有角色）
         mapping.put("/medicine-category-relations/**", RoleCombination.ALL); // 其他药品分类关联操作（所有角色）
+        
+        // 药品分类关联接口（API前缀，对所有角色开放）
+        mapping.put("/api/medicine-category-relations/page", RoleCombination.ALL); // API前缀的分页查询药品分类关联（所有角色）
+        mapping.put("/api/medicine-category-relations/**", RoleCombination.ALL); // API前缀的其他药品分类关联操作（所有角色）
         
         // 管理员专属接口
         mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
@@ -105,7 +117,11 @@ public class PermissionConfig {
             "/auth/register", 
             "/auth/doctor-authenticate",
             "/auth/patient-authenticate",
-            "/auth/refresh"
+            "/auth/refresh",
+            "/medicine-categories/big-list",
+            "/medicine-categories/sub-list/**",
+            "/api/medicine-categories/big-list",
+            "/api/medicine-categories/sub-list/**"
         };
     }
 }

@@ -1,11 +1,15 @@
 package com.xitian.smarthealthhub.domain.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
  * 药品分类DTO
  */
-@Data
+@Getter
+@Setter
+@ToString
 public class MedicineCategoriesDto {
     /**
      * 主键，雪花ID

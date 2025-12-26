@@ -114,4 +114,41 @@ public class MedicinesConverter {
         vo.setUpdatedAt(entity.getUpdatedAt());
         return vo;
     }
+    
+    /**
+     * 将实体和小类名称转换为VO
+     */
+    public MedicinesVo entityToVoWithSubCategory(MedicinesEntity entity, String subCategoryName) {
+        if (entity == null) {
+            return null;
+        }
+        MedicinesVo vo = new MedicinesVo();
+        vo.setId(entity.getId());
+        vo.setName(entity.getName());
+        vo.setCommonName(entity.getCommonName());
+        vo.setBrandName(entity.getBrandName());
+        vo.setDescription(entity.getDescription());
+        vo.setCoverImageUrl(entity.getCoverImageUrl());
+        vo.setImages(entity.getImages());
+        vo.setSpecs(entity.getSpecs());
+        vo.setTags(entity.getTags());
+        vo.setRecommendationLevel(entity.getRecommendationLevel());
+        vo.setIsPrescription(entity.getIsPrescription());
+        vo.setPrice(entity.getPrice());
+        vo.setOriginalPrice(entity.getOriginalPrice());
+        vo.setSales(entity.getSales());
+        vo.setRating(entity.getRating());
+        vo.setIndications(entity.getIndications());
+        vo.setFunctions(entity.getFunctions());
+        vo.setDosage(entity.getDosage());
+        vo.setAdverseReactions(entity.getAdverseReactions());
+        vo.setContraindications(entity.getContraindications());
+        vo.setPrecautions(entity.getPrecautions());
+        vo.setStatus(entity.getStatus());
+        vo.setIsDeleted(entity.getIsDeleted());
+        vo.setCreatedAt(entity.getCreatedAt());
+        vo.setUpdatedAt(entity.getUpdatedAt());
+        vo.setSubCategoryName(subCategoryName);
+        return vo;
+    }
 }

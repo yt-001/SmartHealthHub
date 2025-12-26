@@ -1,29 +1,35 @@
 package com.xitian.smarthealthhub.domain.query;
 
-import lombok.Data;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
- * 药品与分类的关联表查询类
+ * 药品分类关联查询类
+ * 
+ * @author 
+ * @date 2025/02/04
  */
-@Data
+@Getter
+@Setter
+@ToString
 public class MedicineCategoryRelationsQuery {
     /**
      * 药品ID
      */
+    @Schema(description = "药品ID")
     private Long medicineId;
 
     /**
      * 分类ID
      */
+    @Schema(description = "分类ID")
     private Long categoryId;
 
     /**
-     * 页码
+     * 大类ID（父分类ID）
      */
-    private Integer pageNum = 1;
-
-    /**
-     * 每页大小
-     */
-    private Integer pageSize = 10;
+    @Schema(description = "大类ID（父分类ID）")
+    private Long parentCategoryId;
 }

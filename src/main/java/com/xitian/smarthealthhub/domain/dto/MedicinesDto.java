@@ -1,13 +1,17 @@
 package com.xitian.smarthealthhub.domain.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 
 /**
  * 药品信息主表DTO
  */
-@Data
+@Getter
+@Setter
+@ToString
 public class MedicinesDto {
     /**
      * 主键，雪花ID

@@ -1,7 +1,9 @@
 package com.xitian.smarthealthhub.domain.vo;
 
 import com.xitian.smarthealthhub.bean.base.BaseVO;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
@@ -9,7 +11,9 @@ import java.math.BigDecimal;
 /**
  * 药品信息主表VO
  */
-@Data
+@Getter
+@Setter
+@ToString
 @EqualsAndHashCode(callSuper = true)
 public class MedicinesVo extends BaseVO {
     /**
@@ -121,4 +125,9 @@ public class MedicinesVo extends BaseVO {
      * 逻辑删除：0 正常 1 已删
      */
     private Integer isDeleted;
+    
+    /**
+     * 小类名称（子分类名称）
+     */
+    private String subCategoryName;
 }

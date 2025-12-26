@@ -1,8 +1,10 @@
 package com.xitian.smarthealthhub.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xitian.smarthealthhub.bean.PageBean;
+import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.converter.MedicineCategoriesConverter;
 import com.xitian.smarthealthhub.domain.dto.MedicineCategoriesDto;
 import com.xitian.smarthealthhub.domain.entity.MedicineCategoriesEntity;
@@ -12,54 +14,90 @@ import com.xitian.smarthealthhub.mapper.MedicineCategoriesMapper;
 import com.xitian.smarthealthhub.service.MedicineCategoriesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * 药品分类Service实现类
+ * 药品分类服务实现类
+ * 
+ * @author 
+ * @date 2025/02/04
  */
 @Service
 public class MedicineCategoriesServiceImpl implements MedicineCategoriesService {
+    private final MedicineCategoriesMapper medicineCategoriesMapper;
 
-    @Autowired
-    private MedicineCategoriesMapper medicineCategoriesMapper;
+    private final MedicineCategoriesConverter medicineCategoriesConverter;
 
-    @Autowired
-    private MedicineCategoriesConverter medicineCategoriesConverter;
-
-    @Override
-    public PageBean<MedicineCategoriesVo> pageQuery(MedicineCategoriesQuery query) {
-        // 构建查询条件
-        QueryWrapper<MedicineCategoriesEntity> wrapper = new QueryWrapper<>();
-        if (query.getParentId() != null) {
-            wrapper.eq("parent_id", query.getParentId());
-        }
-        if (query.getName() != null && !query.getName().isEmpty()) {
-            wrapper.like("name", query.getName());
-        }
-        if (query.getIsEnabled() != null) {
-            wrapper.eq("is_enabled", query.getIsEnabled());
-        }
-
-        // 执行分页查询
-        Page<MedicineCategoriesEntity> page = new Page<>(query.getPageNum(), query.getPageSize());
-        Page<MedicineCategoriesEntity> resultPage = medicineCategoriesMapper.selectPage(page, wrapper);
-
-        // 转换为VO并封装分页结果
-        PageBean<MedicineCategoriesVo> pageBean = new PageBean<>();
-        pageBean.setPageNum(query.getPageNum());
-        pageBean.setPageSize(query.getPageSize());
-        pageBean.setTotal(resultPage.getTotal());
-        pageBean.setList(resultPage.getRecords().stream()
-                .map(medicineCategoriesConverter::entityToVo)
-                .toList());
-        return pageBean;
+    public MedicineCategoriesServiceImpl(MedicineCategoriesMapper medicineCategoriesMapper,
+                                        MedicineCategoriesConverter medicineCategoriesConverter) {
+        this.medicineCategoriesMapper = medicineCategoriesMapper;
+        this.medicineCategoriesConverter = medicineCategoriesConverter;
     }
 
+    /**
+     * 分页查询
+     * 
+     * @param param 分页参数和查询条件
+     * @return 分页结果
+     */
+    @Override
+    public PageBean<MedicineCategoriesVo> pageQuery(PageParam<MedicineCategoriesQuery> param) {
+        // 构建分页对象
+        Page<MedicineCategoriesEntity> page = new Page<>(param.getPageNum(), param.getPageSize());
+        
+        // 构建查询条件
+        LambdaQueryWrapper<MedicineCategoriesEntity> queryWrapper = Wrappers.lambdaQuery();
+        
+        // 如果有查询条件，则添加查询条件
+        if (param.getQuery() != null) {
+            MedicineCategoriesQuery query = param.getQuery();
+            
+            if (query.getParentId() != null) {
+                queryWrapper.eq(MedicineCategoriesEntity::getParentId, query.getParentId());
+            }
+
+            if (StringUtils.hasText(query.getName())) {
+                queryWrapper.like(MedicineCategoriesEntity::getName, query.getName());
+            }
+
+            if (query.getIsEnabled() != null) {
+                queryWrapper.eq(MedicineCategoriesEntity::getIsEnabled, query.getIsEnabled());
+            }
+        }
+
+        // 按创建时间倒序排列
+        queryWrapper.orderByDesc(MedicineCategoriesEntity::getCreatedAt);
+        
+        // 执行分页查询
+        Page<MedicineCategoriesEntity> resultPage = medicineCategoriesMapper.selectPage(page, queryWrapper);
+
+        // 转换为VO并封装分页结果
+        return PageBean.of(resultPage.getRecords().stream()
+                .map(medicineCategoriesConverter::entityToVo)
+                .toList(), resultPage.getTotal(), param);
+    }
+
+    /**
+     * 根据ID查询
+     * 
+     * @param id ID
+     * @return 实体
+     */
     @Override
     public MedicineCategoriesVo getById(Long id) {
         MedicineCategoriesEntity entity = medicineCategoriesMapper.selectById(id);
         return medicineCategoriesConverter.entityToVo(entity);
     }
 
+    /**
+     * 新增
+     * 
+     * @param dto DTO
+     * @return ID
+     */
     @Override
     public Long add(MedicineCategoriesDto dto) {
         MedicineCategoriesEntity entity = medicineCategoriesConverter.dtoToEntity(dto);
@@ -67,16 +105,82 @@ public class MedicineCategoriesServiceImpl implements MedicineCategoriesService 
         return entity.getId();
     }
 
+    /**
+     * 修改
+     * 
+     * @param dto DTO
+     * @return 是否成功
+     */
     @Override
     public Boolean update(MedicineCategoriesDto dto) {
         MedicineCategoriesEntity entity = medicineCategoriesConverter.dtoToEntity(dto);
-        int result = medicineCategoriesMapper.updateById(entity);
-        return result > 0;
+        return medicineCategoriesMapper.updateById(entity) > 0;
     }
 
+    /**
+     * 删除
+     * 
+     * @param id ID
+     * @return 是否成功
+     */
     @Override
     public Boolean delete(Long id) {
-        int result = medicineCategoriesMapper.deleteById(id);
-        return result > 0;
+        return medicineCategoriesMapper.deleteById(id) > 0;
+    }
+
+    /**
+     * 根据父分类ID获取子分类ID列表
+     * 
+     * @param parentId 父分类ID
+     * @return 子分类ID列表
+     */
+    @Override
+    public List<Long> getSubCategoryIdsByParentId(Long parentId) {
+        LambdaQueryWrapper<MedicineCategoriesEntity> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(MedicineCategoriesEntity::getParentId, parentId);
+        
+        List<MedicineCategoriesEntity> entities = medicineCategoriesMapper.selectList(queryWrapper);
+        return entities.stream()
+                .map(MedicineCategoriesEntity::getId)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取所有一级分类（大类）列表
+     *
+     * @return 大类分类列表
+     */
+    @Override
+    public List<MedicineCategoriesVo> listBigCategories() {
+        LambdaQueryWrapper<MedicineCategoriesEntity> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.isNull(MedicineCategoriesEntity::getParentId);
+        queryWrapper.eq(MedicineCategoriesEntity::getIsEnabled, 1);
+        queryWrapper.orderByAsc(MedicineCategoriesEntity::getSortOrder)
+                .orderByDesc(MedicineCategoriesEntity::getCreatedAt);
+
+        List<MedicineCategoriesEntity> entities = medicineCategoriesMapper.selectList(queryWrapper);
+        return entities.stream()
+                .map(medicineCategoriesConverter::entityToVo)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 根据父分类ID获取子分类列表（小类）
+     *
+     * @param parentId 父分类ID
+     * @return 子分类列表
+     */
+    @Override
+    public List<MedicineCategoriesVo> listSubCategoriesByParentId(Long parentId) {
+        LambdaQueryWrapper<MedicineCategoriesEntity> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(MedicineCategoriesEntity::getParentId, parentId);
+        queryWrapper.eq(MedicineCategoriesEntity::getIsEnabled, 1);
+        queryWrapper.orderByAsc(MedicineCategoriesEntity::getSortOrder)
+                .orderByDesc(MedicineCategoriesEntity::getCreatedAt);
+
+        List<MedicineCategoriesEntity> entities = medicineCategoriesMapper.selectList(queryWrapper);
+        return entities.stream()
+                .map(medicineCategoriesConverter::entityToVo)
+                .collect(Collectors.toList());
     }
 }

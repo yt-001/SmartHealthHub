@@ -1,46 +1,47 @@
 package com.xitian.smarthealthhub.domain.query;
 
-import lombok.Data;
-
-import java.math.BigDecimal;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 /**
- * 药品信息主表查询类
+ * 药品查询类
+ * 
+ * @author 
+ * @date 2025/02/04
  */
-@Data
+@Getter
+@Setter
+@ToString
 public class MedicinesQuery {
     /**
-     * 药品名称（展示名）
+     * 药品名称（模糊查询）
      */
+    @Schema(description = "药品名称（模糊查询）")
     private String name;
 
     /**
-     * 是否处方药：0 否（OTC） 1 是
+     * 是否处方药（0-非处方药，1-处方药）
      */
+    @Schema(description = "是否处方药（0-非处方药，1-处方药）")
     private Integer isPrescription;
 
     /**
-     * 状态：0 隐藏 1 显示
+     * 状态（0-隐藏，1-显示）
      */
+    @Schema(description = "状态（0-隐藏，1-显示）")
     private Integer status;
-
+    
     /**
-     * 价格范围 - 最小值
+     * 分类ID（通过关联表查询）
      */
-    private BigDecimal minPrice;
-
+    @Schema(description = "分类ID")
+    private Long categoryId;
+    
     /**
-     * 价格范围 - 最大值
+     * 大类ID（通过关联表查询其子分类下的药品）
      */
-    private BigDecimal maxPrice;
-
-    /**
-     * 页码
-     */
-    private Integer pageNum = 1;
-
-    /**
-     * 每页大小
-     */
-    private Integer pageSize = 10;
+    @Schema(description = "大类ID")
+    private Long parentCategoryId;
 }

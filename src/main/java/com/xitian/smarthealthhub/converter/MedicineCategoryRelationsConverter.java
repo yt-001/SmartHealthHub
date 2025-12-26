@@ -53,4 +53,21 @@ public class MedicineCategoryRelationsConverter {
         vo.setCreatedAt(entity.getCreatedAt());
         return vo;
     }
+
+    /**
+     * 将实体和药品名称、分类名称转换为VO
+     */
+    public MedicineCategoryRelationsVo entityWithNamesToVo(MedicineCategoryRelationsEntity entity, String medicineName, String categoryName) {
+        if (entity == null) {
+            return null;
+        }
+        MedicineCategoryRelationsVo vo = new MedicineCategoryRelationsVo();
+        vo.setId(entity.getId());
+        vo.setMedicineId(entity.getMedicineId());
+        vo.setCategoryId(entity.getCategoryId());
+        vo.setCreatedAt(entity.getCreatedAt());
+        vo.setMedicineName(medicineName);
+        vo.setCategoryName(categoryName);
+        return vo;
+    }
 }

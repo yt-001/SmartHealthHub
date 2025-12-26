@@ -1,13 +1,17 @@
 package com.xitian.smarthealthhub.domain.vo;
 
 import com.xitian.smarthealthhub.bean.base.BaseVO;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.EqualsAndHashCode;
 
 /**
  * 药品分类VO
  */
-@Data
+@Getter
+@Setter
+@ToString
 @EqualsAndHashCode(callSuper = true)
 public class MedicineCategoriesVo extends BaseVO {
     /**
