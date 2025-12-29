@@ -74,20 +74,6 @@ public class MedicinesEntity extends BaseEntity {
     private String specs;
 
     /**
-     * 标签JSON数组
-     */
-    @TableField("tags")
-    @Schema(description = "标签JSON数组")
-    private String tags;
-
-    /**
-     * 推荐级别文案（如"首选推荐"）
-     */
-    @TableField("recommendation_level")
-    @Schema(description = "推荐级别文案（如\"首选推荐\"）")
-    private String recommendationLevel;
-
-    /**
      * 是否处方药：0 否（OTC） 1 是
      */
     @TableField("is_prescription")

@@ -27,8 +27,6 @@ public class MedicinesConverter {
         dto.setCoverImageUrl(entity.getCoverImageUrl());
         dto.setImages(entity.getImages());
         dto.setSpecs(entity.getSpecs());
-        dto.setTags(entity.getTags());
-        dto.setRecommendationLevel(entity.getRecommendationLevel());
         dto.setIsPrescription(entity.getIsPrescription());
         dto.setPrice(entity.getPrice());
         dto.setOriginalPrice(entity.getOriginalPrice());
@@ -61,8 +59,6 @@ public class MedicinesConverter {
         entity.setCoverImageUrl(dto.getCoverImageUrl());
         entity.setImages(dto.getImages());
         entity.setSpecs(dto.getSpecs());
-        entity.setTags(dto.getTags());
-        entity.setRecommendationLevel(dto.getRecommendationLevel());
         entity.setIsPrescription(dto.getIsPrescription());
         entity.setPrice(dto.getPrice());
         entity.setOriginalPrice(dto.getOriginalPrice());
@@ -95,8 +91,6 @@ public class MedicinesConverter {
         vo.setCoverImageUrl(entity.getCoverImageUrl());
         vo.setImages(entity.getImages());
         vo.setSpecs(entity.getSpecs());
-        vo.setTags(entity.getTags());
-        vo.setRecommendationLevel(entity.getRecommendationLevel());
         vo.setIsPrescription(entity.getIsPrescription());
         vo.setPrice(entity.getPrice());
         vo.setOriginalPrice(entity.getOriginalPrice());
@@ -131,8 +125,6 @@ public class MedicinesConverter {
         vo.setCoverImageUrl(entity.getCoverImageUrl());
         vo.setImages(entity.getImages());
         vo.setSpecs(entity.getSpecs());
-        vo.setTags(entity.getTags());
-        vo.setRecommendationLevel(entity.getRecommendationLevel());
         vo.setIsPrescription(entity.getIsPrescription());
         vo.setPrice(entity.getPrice());
         vo.setOriginalPrice(entity.getOriginalPrice());
