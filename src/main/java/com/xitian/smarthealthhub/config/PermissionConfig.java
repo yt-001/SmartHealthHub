@@ -121,7 +121,9 @@ public class PermissionConfig {
             "/medicine-categories/big-list",
             "/medicine-categories/sub-list/**",
             "/api/medicine-categories/big-list",
-            "/api/medicine-categories/sub-list/**"
+            "/api/medicine-categories/sub-list/**",
+            "/medicines/recommendation-tree",
+            "/api/medicines/recommendation-tree"
         };
     }
 }
