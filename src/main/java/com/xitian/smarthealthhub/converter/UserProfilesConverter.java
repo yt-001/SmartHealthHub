@@ -3,8 +3,14 @@ package com.xitian.smarthealthhub.converter;
 import com.xitian.smarthealthhub.domain.entity.UserProfiles;
 import com.xitian.smarthealthhub.domain.vo.UserProfilesVO;
 import com.xitian.smarthealthhub.util.DesensitizeUtil;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.util.StringUtils;
 
 public class UserProfilesConverter {
+    
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     /**
      * UserProfiles + Users Entity -> UserProfilesVO
      */
@@ -25,7 +31,24 @@ public class UserProfilesConverter {
         vo.setCurrentSymptoms(profile.getCurrentSymptoms());
         vo.setCurrentPlan(profile.getCurrentPlan());
         vo.setNextStep(profile.getNextStep());
-        vo.setAddress(profile.getAddress());
+        
+        // 处理地址字段（可能是JSON格式）
+        String rawAddress = profile.getAddress();
+        if (StringUtils.hasText(rawAddress) && rawAddress.trim().startsWith("{")) {
+            try {
+                JsonNode node = OBJECT_MAPPER.readTree(rawAddress);
+                if (node.has("detail")) {
+                    vo.setAddress(node.get("detail").asText());
+                } else {
+                    vo.setAddress(rawAddress);
+                }
+            } catch (Exception e) {
+                vo.setAddress(rawAddress);
+            }
+        } else {
+            vo.setAddress(rawAddress);
+        }
+        
         vo.setEmergencyName(profile.getEmergencyName());
 
         // 脱敏处理

@@ -36,6 +36,18 @@ public class MedicineOrdersController {
         }
     }
 
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "获取用户订单列表")
+    public ResultBean<List<MedicineOrdersEntity>> getUserOrders(@PathVariable Long userId) {
+        try {
+            List<MedicineOrdersEntity> list = medicineOrdersService.getUserOrders(userId);
+            return ResultBean.success(list);
+        } catch (Exception e) {
+            log.error("获取订单列表失败", e);
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
     @PostMapping("/pay")
     @Operation(summary = "支付订单")
     public ResultBean<Boolean> payOrder(@RequestBody MedicineOrderPayDTO dto) {
@@ -50,11 +62,5 @@ public class MedicineOrdersController {
             log.error("支付订单失败", e);
             return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, e.getMessage());
         }
-    }
-
-    @GetMapping("/list/{userId}")
-    @Operation(summary = "获取用户订单列表")
-    public ResultBean<List<MedicineOrdersEntity>> getUserOrders(@PathVariable Long userId) {
-        return ResultBean.success(medicineOrdersService.getUserOrders(userId));
     }
 }

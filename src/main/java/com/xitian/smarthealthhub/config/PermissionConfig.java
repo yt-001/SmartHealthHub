@@ -65,6 +65,9 @@ public class PermissionConfig {
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
         
+        // 用户档案查询接口（所有角色都可以访问）
+        mapping.put("/user/profiles/**", RoleCombination.ALL);
+
         // 用户接口（用户、医生和管理员都可以访问）
         mapping.put("/user/**", RoleCombination.ALL);
         
@@ -97,9 +100,13 @@ public class PermissionConfig {
         // 药品分类关联接口（API前缀，对所有角色开放）
         mapping.put("/api/medicine-category-relations/page", RoleCombination.ALL); // API前缀的分页查询药品分类关联（所有角色）
         mapping.put("/api/medicine-category-relations/**", RoleCombination.ALL); // API前缀的其他药品分类关联操作（所有角色）
+
+        // 病例记录接口（对所有角色开放，实际业务中应限制只能看自己的）
+        mapping.put("/medicalRecords/**", RoleCombination.ALL);
         
         // 药品订单接口（对所有角色开放）
         mapping.put("/medicine-orders/**", RoleCombination.ALL);
+        mapping.put("/api/medicine-orders/**", RoleCombination.ALL);
 
         // 取药地点接口（对所有角色开放）
         mapping.put("/pharmacy-locations/**", RoleCombination.ALL);
