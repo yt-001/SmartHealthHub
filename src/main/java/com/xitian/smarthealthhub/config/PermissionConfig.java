@@ -98,6 +98,12 @@ public class PermissionConfig {
         mapping.put("/api/medicine-category-relations/page", RoleCombination.ALL); // API前缀的分页查询药品分类关联（所有角色）
         mapping.put("/api/medicine-category-relations/**", RoleCombination.ALL); // API前缀的其他药品分类关联操作（所有角色）
         
+        // 药品订单接口（对所有角色开放）
+        mapping.put("/medicine-orders/**", RoleCombination.ALL);
+
+        // 取药地点接口（对所有角色开放）
+        mapping.put("/pharmacy-locations/**", RoleCombination.ALL);
+
         // 管理员专属接口
         mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
         
