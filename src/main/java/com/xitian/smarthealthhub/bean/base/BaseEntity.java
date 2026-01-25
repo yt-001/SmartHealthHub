@@ -1,5 +1,6 @@
 package com.xitian.smarthealthhub.bean.base;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -27,7 +28,7 @@ public class BaseEntity {
     /**
      * 创建时间
      */
-    @TableField(value = "created_at")
+    @TableField(value = "created_at", fill = FieldFill.INSERT)
     @Schema(description = "创建时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
@@ -35,7 +36,7 @@ public class BaseEntity {
     /**
      * 更新时间
      */
-    @TableField(value = "updated_at")
+    @TableField(value = "updated_at", fill = FieldFill.INSERT_UPDATE)
     @Schema(description = "更新时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;

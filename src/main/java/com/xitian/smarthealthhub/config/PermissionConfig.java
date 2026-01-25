@@ -47,7 +47,8 @@ public class PermissionConfig {
         // 预约挂号接口权限映射（对所有身份开放）
         mapping.put("/appointments/page", RoleCombination.ALL); // 分页查询预约（所有角色）
         mapping.put("/appointments/*", RoleCombination.ALL); // 根据ID获取预约详情（所有角色）
-        mapping.put("/appointments/patient/*", RoleCombination.ALL); // 根据患者ID获取预约列表（所有角色）
+        mapping.put("/appointments/patient/**", RoleCombination.ALL); // 根据患者ID获取预约列表（所有角色）
+        mapping.put("/appointments/doctor/**", RoleCombination.ALL); // 根据医生ID获取预约列表（所有角色）
         mapping.put("/appointments/schedule/*", RoleCombination.ALL); // 根据医生排班ID获取预约列表（所有角色）
         mapping.put("/appointments/create", RoleCombination.ALL); // 创建预约（所有角色）
         mapping.put("/appointments/*/status", RoleCombination.ALL); // 更新预约状态（所有角色）
@@ -61,6 +62,7 @@ public class PermissionConfig {
 
         // 管理员医生分页查询接口（对所有身份开放）
         mapping.put("/admin/doctors/page", RoleCombination.ALL); // 分页查询医生信息（所有角色）
+        mapping.put("/admin/patients/page", RoleCombination.ADMIN_DOCTOR); // 分页查询患者信息（管理员和医生）
 
         // 用户信息更新接口（所有角色都可以访问）
         mapping.put("/user/updateProfile", RoleCombination.ALL);
@@ -107,6 +109,9 @@ public class PermissionConfig {
         // 药品订单接口（对所有角色开放）
         mapping.put("/medicine-orders/**", RoleCombination.ALL);
         mapping.put("/api/medicine-orders/**", RoleCombination.ALL);
+
+        // 处方管理接口（对所有角色开放）
+        mapping.put("/prescriptions/**", RoleCombination.ALL);
 
         // 取药地点接口（对所有角色开放）
         mapping.put("/pharmacy-locations/**", RoleCombination.ALL);
