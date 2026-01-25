@@ -69,10 +69,26 @@ public class AuthController {
                 return ResultBean.fail(StatusCode.BAD_REQUEST, "两次输入的密码不一致");
             }
             
-            // 2. 检查手机号是否已存在
-            Users existingUser = usersService.getUserByPhone(userRegistrationDTO.getPhone());
-            if (existingUser != null) {
-                return ResultBean.fail(StatusCode.USER_ALREADY_EXISTS, "该手机号已被注册");
+            // 2. 检查手机号或邮箱是否已存在
+            String phone = userRegistrationDTO.getPhone();
+            String email = userRegistrationDTO.getEmail();
+            
+            if ((phone == null || phone.isEmpty()) && (email == null || email.isEmpty())) {
+                 return ResultBean.fail(StatusCode.BAD_REQUEST, "手机号或邮箱至少填写一项");
+            }
+            
+            if (phone != null && !phone.isEmpty()) {
+                Users existingUser = usersService.getUserByPhone(phone);
+                if (existingUser != null) {
+                    return ResultBean.fail(StatusCode.USER_ALREADY_EXISTS, "该手机号已被注册");
+                }
+            }
+            
+            if (email != null && !email.isEmpty()) {
+                Users existingUser = usersService.getUserByEmail(email);
+                if (existingUser != null) {
+                    return ResultBean.fail(StatusCode.USER_ALREADY_EXISTS, "该邮箱已被注册");
+                }
             }
             
             // 3. 创建新用户
@@ -121,7 +137,7 @@ public class AuthController {
 
     /**
      * 用户登录接口
-     * @param loginRequestDTO 登录请求对象，包含手机号、密码和角色
+     * @param loginRequestDTO 登录请求对象，包含账号、密码和角色
      * @param response HttpServletResponse对象，用于设置HttpOnly Cookie
      * @return 操作结果
      */
@@ -129,12 +145,15 @@ public class AuthController {
     public ResultBean<Map<String, Object>> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
                                                  HttpServletResponse response) {
         try {
-            String phone = loginRequestDTO.getPhone();
+            String account = loginRequestDTO.getAccount();
             String password = loginRequestDTO.getPassword();
             Byte role = loginRequestDTO.getRole();
             
-            // 1. 先从数据库获取用户信息，不进行认证
-            Users user = usersService.getUserByPhone(phone);
+            // 1. 先从数据库获取用户信息，支持手机号或邮箱
+            Users user = usersService.getOne(new LambdaQueryWrapper<Users>()
+                    .eq(Users::getPhone, account)
+                    .or()
+                    .eq(Users::getEmail, account));
             
             // 2. 检查用户是否存在
             if (user == null) {
@@ -152,18 +171,24 @@ public class AuthController {
             }
 
             // 5. 角色和状态都验证通过后，再进行密码认证
+            // 使用手机号或邮箱作为认证主体
+            String principal = user.getPhone();
+            if (principal == null || principal.isEmpty()) {
+                principal = user.getEmail();
+            }
+            
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(phone, password)
+                    new UsernamePasswordAuthenticationToken(principal, password)
             );
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             
             // 6. 生成访问令牌（携带角色信息）
             String userRole = getUserRoleName(user.getRole());
-            String accessToken = jwtUtil.generateAccessToken(user.getPhone(), userRole);
+            String accessToken = jwtUtil.generateAccessToken(principal, userRole);
             
             // 7. 生成刷新令牌（也携带角色信息）
-            String refreshToken = jwtUtil.generateRefreshToken(user.getPhone(), userRole);
+            String refreshToken = jwtUtil.generateRefreshToken(principal, userRole);
 
             // 8. 设置HttpOnly Cookie（设置访问令牌）
             response.addCookie(new jakarta.servlet.http.Cookie("access_token", accessToken) {{
@@ -214,7 +239,7 @@ public class AuthController {
 
             String username;
             try {
-                // 从令牌中获取用户名（手机号）
+                // 从令牌中获取用户名（手机号或邮箱）
                 username = jwtUtil.getUsernameFromToken(accessToken);
             } catch (Exception e) {
                 // 令牌解析失败
@@ -226,8 +251,12 @@ public class AuthController {
                 return ResultBean.of(StatusCode.EXPIRED_TOKEN, "访问令牌已过期，请刷新令牌");
             }
 
-            // 获取用户信息
-            Users user = usersService.getUserByPhone(username);
+            // 获取用户信息，支持手机号或邮箱
+            Users user = usersService.getOne(new LambdaQueryWrapper<Users>()
+                    .eq(Users::getPhone, username)
+                    .or()
+                    .eq(Users::getEmail, username));
+            
             if (user == null) {
                 return ResultBean.fail(StatusCode.USER_NOT_FOUND, "用户不存在");
             }

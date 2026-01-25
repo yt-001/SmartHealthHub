@@ -97,8 +97,9 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 直接查询数据库获取用户信息（主要用于登录认证过程）
+        // 支持手机号或邮箱登录
         LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Users::getPhone, username);
+        queryWrapper.eq(Users::getPhone, username).or().eq(Users::getEmail, username);
         Users user = this.getOne(queryWrapper);
         
         if (user == null) {
@@ -123,6 +124,13 @@ public class UsersServiceImpl extends ServiceImpl<UsersMapper, Users> implements
         return this.getOne(queryWrapper);
     }
     
+    @Override
+    public Users getUserByEmail(String email) {
+        LambdaQueryWrapper<Users> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Users::getEmail, email);
+        return this.getOne(queryWrapper);
+    }
+
     @Override
     public boolean updateUserInfo(UserUpdateDTO userUpdateDTO) {
         // 根据ID查询用户

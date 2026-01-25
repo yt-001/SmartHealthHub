@@ -9,6 +9,8 @@ import com.xitian.smarthealthhub.domain.entity.MedicalRecords;
 import com.xitian.smarthealthhub.domain.vo.MedicalRecordDetailVO;
 import com.xitian.smarthealthhub.domain.vo.MedicalRecordListItemVO;
 import com.xitian.smarthealthhub.service.MedicalRecordsService;
+import com.xitian.smarthealthhub.domain.dto.MedicalRecordSaveDTO;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import jakarta.annotation.Resource;
 import java.util.List;
@@ -62,6 +64,44 @@ public class MedicalRecordsController {
         List<MedicalRecords> medicalRecordsList = medicalRecordsService.list(queryWrapper);
         List<MedicalRecordListItemVO> voList = MedicalRecordListItemConverter.toVOList(medicalRecordsList);
         return ResultBean.success(voList);
+    }
+
+    /**
+     * 保存或更新病例信息（包含处方）
+     * @param saveDTO 病例信息
+     * @return 操作结果
+     */
+    @PostMapping("/save")
+    public ResultBean<String> saveOrUpdate(@RequestBody MedicalRecordSaveDTO saveDTO) {
+        MedicalRecords medicalRecords;
+        if (saveDTO.getId() != null) {
+            medicalRecords = medicalRecordsService.getById(saveDTO.getId());
+            if (medicalRecords == null) {
+                return ResultBean.fail(StatusCode.DATA_NOT_FOUND);
+            }
+        } else {
+            medicalRecords = new MedicalRecords();
+            medicalRecords.setCreatedAt(java.time.LocalDateTime.now());
+        }
+        
+        BeanUtils.copyProperties(saveDTO, medicalRecords, "id", "createdAt", "updatedAt", "deleted");
+        
+        // 如果是新增，确保有就诊日期
+        if (medicalRecords.getVisitDate() == null) {
+            medicalRecords.setVisitDate(java.time.LocalDateTime.now());
+        }
+        
+        // 默认状态为治疗中
+        if (medicalRecords.getStatus() == null) {
+            medicalRecords.setStatus((byte) 0);
+        }
+        
+        boolean success = medicalRecordsService.saveOrUpdate(medicalRecords);
+        if (success) {
+            return ResultBean.success("保存成功");
+        } else {
+            return ResultBean.fail(StatusCode.INTERNAL_SERVER_ERROR, "保存失败");
+        }
     }
 
     /**

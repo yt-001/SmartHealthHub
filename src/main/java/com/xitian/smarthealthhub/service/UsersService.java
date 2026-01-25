@@ -18,6 +18,13 @@ public interface UsersService extends IService<Users>, UserDetailsService {
      * @return 用户信息
      */
     Users getUserByPhone(String phone);
+
+    /**
+     * 根据邮箱获取用户信息
+     * @param email 邮箱
+     * @return 用户信息
+     */
+    Users getUserByEmail(String email);
     
     /**
      * 更新用户信息
