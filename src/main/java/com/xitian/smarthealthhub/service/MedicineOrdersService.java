@@ -1,7 +1,10 @@
 package com.xitian.smarthealthhub.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.xitian.smarthealthhub.bean.PageBean;
+import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.domain.entity.MedicineOrdersEntity;
+import com.xitian.smarthealthhub.domain.query.MedicineOrdersQuery;
 
 import java.util.List;
 
@@ -12,6 +15,13 @@ import java.util.List;
  * @date 2025/02/04
  */
 public interface MedicineOrdersService extends IService<MedicineOrdersEntity> {
+    /**
+     * 分页查询
+     * @param param 分页参数
+     * @return 分页结果
+     */
+    PageBean<MedicineOrdersEntity> pageQuery(PageParam<MedicineOrdersQuery> param);
+
     /**
      * 创建订单
      * @param userId 用户ID

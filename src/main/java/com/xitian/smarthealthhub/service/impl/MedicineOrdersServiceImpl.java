@@ -1,8 +1,12 @@
 package com.xitian.smarthealthhub.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.xitian.smarthealthhub.bean.PageBean;
+import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.domain.entity.MedicineOrdersEntity;
+import com.xitian.smarthealthhub.domain.query.MedicineOrdersQuery;
 import com.xitian.smarthealthhub.domain.vo.MedicinesVo;
 import com.xitian.smarthealthhub.mapper.MedicineOrdersMapper;
 import com.xitian.smarthealthhub.service.MedicineOrdersService;
@@ -10,6 +14,7 @@ import com.xitian.smarthealthhub.service.MedicinesService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -28,6 +33,30 @@ public class MedicineOrdersServiceImpl extends ServiceImpl<MedicineOrdersMapper,
 
     @Autowired
     private MedicinesService medicinesService;
+
+    @Override
+    public PageBean<MedicineOrdersEntity> pageQuery(PageParam<MedicineOrdersQuery> param) {
+        Page<MedicineOrdersEntity> page = new Page<>(param.getPageNum(), param.getPageSize());
+        LambdaQueryWrapper<MedicineOrdersEntity> wrapper = new LambdaQueryWrapper<>();
+        
+        if (param.getQuery() != null) {
+            MedicineOrdersQuery query = param.getQuery();
+            if (StringUtils.hasText(query.getOrderNo())) {
+                wrapper.like(MedicineOrdersEntity::getOrderNo, query.getOrderNo());
+            }
+            if (StringUtils.hasText(query.getMedicineName())) {
+                wrapper.like(MedicineOrdersEntity::getMedicineName, query.getMedicineName());
+            }
+            if (query.getStatus() != null) {
+                wrapper.eq(MedicineOrdersEntity::getStatus, query.getStatus());
+            }
+        }
+        
+        wrapper.orderByDesc(MedicineOrdersEntity::getCreatedAt);
+        
+        this.page(page, wrapper);
+        return PageBean.of(page.getRecords(), page.getTotal(), param);
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

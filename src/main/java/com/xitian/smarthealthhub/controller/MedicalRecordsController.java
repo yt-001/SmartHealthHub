@@ -1,13 +1,17 @@
 package com.xitian.smarthealthhub.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.xitian.smarthealthhub.bean.PageBean;
+import com.xitian.smarthealthhub.bean.PageParam;
 import com.xitian.smarthealthhub.bean.ResultBean;
 import com.xitian.smarthealthhub.bean.StatusCode;
 import com.xitian.smarthealthhub.converter.MedicalRecordDetailConverter;
 import com.xitian.smarthealthhub.converter.MedicalRecordListItemConverter;
 import com.xitian.smarthealthhub.domain.entity.MedicalRecords;
+import com.xitian.smarthealthhub.domain.query.MedicalRecordQuery;
 import com.xitian.smarthealthhub.domain.vo.MedicalRecordDetailVO;
 import com.xitian.smarthealthhub.domain.vo.MedicalRecordListItemVO;
+import com.xitian.smarthealthhub.domain.vo.MedicalRecordPageVO;
 import com.xitian.smarthealthhub.service.MedicalRecordsService;
 import com.xitian.smarthealthhub.domain.dto.MedicalRecordSaveDTO;
 import org.springframework.beans.BeanUtils;
@@ -22,6 +26,17 @@ public class MedicalRecordsController {
 
     @Resource
     private MedicalRecordsService medicalRecordsService;
+
+    /**
+     * 分页查询病例历史（管理员）
+     * @param param 分页参数
+     * @return 分页结果
+     */
+    @PostMapping("/page")
+    public ResultBean<PageBean<MedicalRecordPageVO>> page(@RequestBody PageParam<MedicalRecordQuery> param) {
+        PageBean<MedicalRecordPageVO> page = medicalRecordsService.page(param);
+        return ResultBean.success(page);
+    }
 
     /**
      * 根据ID获取病例历史信息（详情页）
