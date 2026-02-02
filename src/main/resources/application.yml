@@ -22,3 +22,7 @@ mybatis-plus:
       id-type: ASSIGN_ID
 server:
   port: 9330
+  
+file:
+  upload-path: F:/SmartHealthHub/
+  static-access-path: /uploads/**

@@ -322,6 +322,33 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
     }
     
     /**
+     * 获取热门健康文章（按浏览量倒序）
+     * @param limit 限制数量
+     * @return 热门健康文章列表
+     */
+    @Override
+    public List<HealthArticleVO> getTopHotArticles(int limit) {
+        // 构建查询条件 - 只查询已发布的文章
+        LambdaQueryWrapper<HealthArticles> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(HealthArticles::getIsDeleted, (byte) 0); // 只查询未删除的文章
+        queryWrapper.eq(HealthArticles::getStatus, (byte) 1); // 只查询已发布的文章
+        
+        // 按浏览量倒序排列
+        queryWrapper.orderByDesc(HealthArticles::getViewCount);
+        
+        // 限制数量
+        queryWrapper.last("limit " + limit);
+        
+        // 执行查询
+        List<HealthArticles> list = this.list(queryWrapper);
+        
+        // 转换为VO对象
+        return list.stream()
+                .map(HealthArticleConverter::toVO)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 根据ID获取健康文章详情
      * @param id 文章ID
      * @return 健康文章详情

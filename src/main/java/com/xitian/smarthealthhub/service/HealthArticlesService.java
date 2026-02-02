@@ -50,6 +50,13 @@ public interface HealthArticlesService extends IService<HealthArticles> {
     PageBean<HealthArticleVO> pagePublicArticlesByAuthorId(Long authorId, PageParam<Void> param);
     
     /**
+     * 获取热门健康文章（按浏览量倒序）
+     * @param limit 限制数量
+     * @return 热门健康文章列表
+     */
+    List<HealthArticleVO> getTopHotArticles(int limit);
+
+    /**
      * 根据ID获取健康文章详情
      * @param id 文章ID
      * @return 健康文章详情

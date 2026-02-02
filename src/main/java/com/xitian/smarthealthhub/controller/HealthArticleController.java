@@ -77,6 +77,18 @@ public class HealthArticleController {
     }
     
     /**
+     * 获取热门健康文章（用户端接口，按浏览量倒序）
+     * @param limit 限制数量，默认10
+     * @return 热门健康文章列表
+     */
+    @Operation(summary = "获取热门健康文章（用户端，按浏览量倒序）")
+    @GetMapping("/public/hot")
+    public ResultBean<List<HealthArticleVO>> getHotArticles(@RequestParam(required = false, defaultValue = "10") Integer limit) {
+        List<HealthArticleVO> hotArticles = healthArticlesService.getTopHotArticles(limit);
+        return ResultBean.success(hotArticles);
+    }
+
+    /**
      * 根据作者ID分页查询健康文章
      * @param authorId 作者ID
      * @param param 分页参数

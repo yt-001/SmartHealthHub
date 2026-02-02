@@ -141,7 +141,14 @@ public class PermissionConfig {
             "/api/medicine-categories/big-list",
             "/api/medicine-categories/sub-list/**",
             "/medicines/recommendation-tree",
-            "/api/medicines/recommendation-tree"
+            "/api/medicines/recommendation-tree",
+            "/uploads/**", // 静态资源访问
+            "/uploads/images/**", // 明确放行图片路径
+            "/uploads/videos/**", // 明确放行视频路径
+            "/doc.html",
+            "/webjars/**",
+            "/v3/api-docs/**",
+            "/favicon.ico"
         };
     }
 }
