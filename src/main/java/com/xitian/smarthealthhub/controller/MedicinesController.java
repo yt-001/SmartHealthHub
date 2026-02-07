@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
@@ -109,7 +111,10 @@ public class MedicinesController {
      */
     @GetMapping("/recommendation-tree")
     @Operation(summary = "获取前台调理推荐分类树")
-    public ResultBean<List<MedicineRecommendationCategoryVO>> getRecommendationTree() {
+    public ResultBean<List<MedicineRecommendationCategoryVO>> getRecommendationTree(
+            @RequestParam(value = "keyword", required = false) String keyword
+    ) {
+        String trimmedKeyword = StringUtils.hasText(keyword) ? keyword.trim() : null;
         List<MedicineCategoriesVo> bigCategories = medicineCategoriesService.listBigCategories();
         List<MedicineRecommendationCategoryVO> result = new ArrayList<>();
 
@@ -143,11 +148,22 @@ public class MedicinesController {
                 List<MedicineRecommendationMedicineVO> medicines = new ArrayList<>();
 
                 if (medicineIds != null && !medicineIds.isEmpty()) {
-                    List<Long> limitedIds = medicineIds.stream().limit(6).collect(Collectors.toList());
+                    List<Long> limitedIds;
+                    if (StringUtils.hasText(trimmedKeyword)) {
+                        limitedIds = medicineIds;
+                    } else {
+                        limitedIds = medicineIds.stream().limit(6).collect(Collectors.toList());
+                    }
                     for (Long medicineId : limitedIds) {
                         MedicinesVo vo = medicinesService.getById(medicineId);
                         if (vo == null) {
                             continue;
+                        }
+                        if (StringUtils.hasText(trimmedKeyword)) {
+                            String name = vo.getName();
+                            if (!StringUtils.hasText(name) || !name.toLowerCase().contains(trimmedKeyword.toLowerCase())) {
+                                continue;
+                            }
                         }
                         MedicineRecommendationMedicineVO med = new MedicineRecommendationMedicineVO();
                         med.setId(vo.getId());
@@ -171,11 +187,15 @@ public class MedicinesController {
                 }
 
                 subCategory.setMedicines(medicines);
-                subList.add(subCategory);
+                if (!StringUtils.hasText(trimmedKeyword) || (medicines != null && !medicines.isEmpty())) {
+                    subList.add(subCategory);
+                }
             }
 
-            category.setSubCategories(subList);
-            result.add(category);
+            if (!StringUtils.hasText(trimmedKeyword) || (subList != null && !subList.isEmpty())) {
+                category.setSubCategories(subList);
+                result.add(category);
+            }
         }
 
         return ResultBean.success(result);
