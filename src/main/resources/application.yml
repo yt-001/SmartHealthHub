@@ -7,6 +7,9 @@ spring:
     password: "123456"
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
+    multipart:
+      max-file-size: 300MB
+      max-request-size: 300MB
     session:
       cookie:
         http-only: true
@@ -22,6 +25,9 @@ mybatis-plus:
       id-type: ASSIGN_ID
 server:
   port: 9330
+  tomcat:
+    max-http-form-post-size: 300MB
+    max-swallow-size: -1
   
 file:
   upload-path: F:/SmartHealthHub/

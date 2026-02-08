@@ -116,6 +116,11 @@ public class PermissionConfig {
         // 取药地点接口（对所有角色开放）
         mapping.put("/pharmacy-locations/**", RoleCombination.ALL);
 
+        mapping.put("/upload/**", RoleCombination.ALL);
+        mapping.put("/files/**", RoleCombination.ALL);
+        mapping.put("/api/upload/**", RoleCombination.ALL);
+        mapping.put("/api/files/**", RoleCombination.ALL);
+
         // 管理员专属接口
         mapping.put("/admin/**", RoleCombination.ADMIN_ONLY);
         
@@ -142,6 +147,10 @@ public class PermissionConfig {
             "/api/medicine-categories/sub-list/**",
             "/medicines/recommendation-tree",
             "/api/medicines/recommendation-tree",
+            "/upload/**",
+            "/files/**",
+            "/api/upload/**",
+            "/api/files/**",
             "/uploads/**", // 静态资源访问
             "/uploads/images/**", // 明确放行图片路径
             "/uploads/videos/**", // 明确放行视频路径

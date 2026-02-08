@@ -41,4 +41,7 @@ public class UserProfilesVO extends BaseVO {
 
     @Schema(description = "紧急联系人电话")
     private String emergencyPhone;
+
+    @Schema(description = "实名认证状态 0 未通过 1 已通过 2 审核中")
+    private Byte idCardVerified;
 }

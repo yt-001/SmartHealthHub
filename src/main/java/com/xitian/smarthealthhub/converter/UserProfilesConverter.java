@@ -31,6 +31,7 @@ public class UserProfilesConverter {
         vo.setCurrentSymptoms(profile.getCurrentSymptoms());
         vo.setCurrentPlan(profile.getCurrentPlan());
         vo.setNextStep(profile.getNextStep());
+        vo.setIdCardVerified(profile.getIdCardVerified());
         
         // 处理地址字段（可能是JSON格式）
         String rawAddress = profile.getAddress();

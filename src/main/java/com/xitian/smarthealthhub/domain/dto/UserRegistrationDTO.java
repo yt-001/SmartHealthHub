@@ -23,7 +23,7 @@ public class UserRegistrationDTO {
     private String realName;
     
     @Schema(description = "手机号")
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式不正确")
+    @Pattern(regexp = "^(|1[3-9]\\d{9})$", message = "手机号格式不正确")
     private String phone;
     
     @Schema(description = "密码")
@@ -45,7 +45,7 @@ public class UserRegistrationDTO {
     
     @Schema(description = "邮箱")
     @Size(max = 64, message = "邮箱长度不能超过64个字符")
-    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "邮箱格式不正确", 
+    @Pattern(regexp = "^(|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})$", message = "邮箱格式不正确", 
              flags = Pattern.Flag.CASE_INSENSITIVE)
     private String email;
     

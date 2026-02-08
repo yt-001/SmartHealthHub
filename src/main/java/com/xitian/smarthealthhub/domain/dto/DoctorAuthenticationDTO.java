@@ -7,7 +7,6 @@ import lombok.Builder;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 
 @Schema(description = "医生认证DTO")
 @Data
@@ -36,4 +35,19 @@ public class DoctorAuthenticationDTO {
     @NotBlank(message = "医师执业证号不能为空")
     @Size(max = 32, message = "医师执业证号长度不能超过32个字符")
     private String qualificationNo;
+
+    @Schema(description = "个人简介")
+    @NotBlank(message = "个人简介不能为空")
+    @Size(max = 1000, message = "个人简介长度不能超过1000个字符")
+    private String bio;
+
+    @Schema(description = "工作班次，如“周一上午 周三下午”")
+    @NotBlank(message = "工作班次不能为空")
+    @Size(max = 255, message = "工作班次长度不能超过255个字符")
+    private String workShift;
+
+    @Schema(description = "诊室编号")
+    @NotBlank(message = "诊室编号不能为空")
+    @Size(max = 32, message = "诊室编号长度不能超过32个字符")
+    private String officeRoom;
 }

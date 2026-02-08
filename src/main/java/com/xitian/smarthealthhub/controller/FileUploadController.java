@@ -14,15 +14,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 @Tag(name = "文件上传接口")
 @RestController
-@RequestMapping("/upload")
+@RequestMapping({"/upload", "/files"})
 @Slf4j
 public class FileUploadController {
 
@@ -38,13 +36,13 @@ public class FileUploadController {
     private static final List<String> VIDEO_EXTENSIONS = Arrays.asList("mp4", "avi", "mov", "wmv", "flv", "mkv");
 
     @Operation(summary = "上传图片")
-    @PostMapping("/image")
+    @PostMapping({"/image", "/upload-image"})
     public ResultBean<String> uploadImage(@RequestParam("file") MultipartFile file) {
         return uploadFile(file, "images", IMAGE_MAX_SIZE, IMAGE_EXTENSIONS);
     }
 
     @Operation(summary = "上传视频")
-    @PostMapping("/video")
+    @PostMapping({"/video", "/upload-video"})
     public ResultBean<String> uploadVideo(@RequestParam("file") MultipartFile file) {
         return uploadFile(file, "videos", VIDEO_MAX_SIZE, VIDEO_EXTENSIONS);
     }
@@ -67,11 +65,10 @@ public class FileUploadController {
         }
 
         try {
-            // 构建存储路径: uploadPath/subDir/yyyyMMdd/uuid.ext
+            // 构建存储路径: uploadPath/subDir/uuid.ext
             // 确保 uploadPath 以分隔符结尾
             String basePath = uploadPath.endsWith(File.separator) || uploadPath.endsWith("/") ? uploadPath : uploadPath + File.separator;
-            String datePath = new SimpleDateFormat("yyyyMMdd").format(new Date());
-            String finalDir = basePath + subDir + File.separator + datePath;
+            String finalDir = basePath + subDir;
             File dir = new File(finalDir);
             if (!dir.exists()) {
                 dir.mkdirs();
@@ -83,8 +80,8 @@ public class FileUploadController {
 
             // 返回可访问的URL
             // 假设 static-access-path 是 /uploads/**
-            // 返回格式: /uploads/subDir/yyyyMMdd/uuid.ext
-            String url = "/uploads/" + subDir + "/" + datePath + "/" + newFilename;
+            // 返回格式: /uploads/subDir/uuid.ext
+            String url = "/uploads/" + subDir + "/" + newFilename;
             return ResultBean.success(url).msg("上传成功");
 
         } catch (IOException e) {
