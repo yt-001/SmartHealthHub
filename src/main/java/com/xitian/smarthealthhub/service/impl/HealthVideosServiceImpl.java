@@ -334,6 +334,10 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createHealthVideo(HealthVideoCreateDTO videoCreateDTO) {
+        Byte rawStatus = videoCreateDTO.getStatus();
+        Byte normalizedStatus;
+        normalizedStatus = (rawStatus != null && rawStatus == 0) ? (byte) 0 : (byte) 3;
+
         HealthVideos healthVideo = HealthVideos.builder()
                 .title(videoCreateDTO.getTitle())
                 .description(videoCreateDTO.getDescription())
@@ -343,7 +347,7 @@ public class HealthVideosServiceImpl extends ServiceImpl<HealthVideosMapper, Hea
                 .authorId(videoCreateDTO.getAuthorId())
                 .authorName(getAuthorName(videoCreateDTO.getAuthorId()))
                 .isTop(videoCreateDTO.getIsTop() != null ? videoCreateDTO.getIsTop() : (byte) 0)
-                .status(videoCreateDTO.getStatus() != null ? videoCreateDTO.getStatus() : (byte) 3) // 默认为审核中状态
+                .status(normalizedStatus)
                 .viewCount(0)
                 .likeCount(0)
                 .commentCount(0)

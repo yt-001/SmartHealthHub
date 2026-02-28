@@ -375,6 +375,10 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createHealthArticle(HealthArticleCreateDTO articleCreateDTO) {
+        Byte rawStatus = articleCreateDTO.getStatus();
+        Byte normalizedStatus;
+        normalizedStatus = (rawStatus != null && rawStatus == 0) ? (byte) 0 : (byte) 3;
+
         HealthArticles healthArticle = HealthArticles.builder()
                 .title(articleCreateDTO.getTitle())
                 .summary(articleCreateDTO.getSummary())
@@ -385,7 +389,7 @@ public class HealthArticlesServiceImpl extends ServiceImpl<HealthArticlesMapper,
                 .deptId(articleCreateDTO.getDeptId())
                 .deptName(getDeptName(articleCreateDTO.getDeptId()))
                 .isTop(articleCreateDTO.getIsTop() != null ? articleCreateDTO.getIsTop() : (byte) 0)
-                .status(articleCreateDTO.getStatus() != null ? articleCreateDTO.getStatus() : (byte) 3) // 默认为审核中状态
+                .status(normalizedStatus)
                 .viewCount(0)
                 .likeCount(0)
                 .isDeleted((byte) 0)

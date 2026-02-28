@@ -14,7 +14,7 @@ public class UserRegistrationDTO {
     
     @Schema(description = "登录账号")
     @NotBlank(message = "用户名不能为空")
-    @Size(min = 3, max = 32, message = "用户名长度必须在3-32个字符之间")
+    @Size(min = 3, max = 20, message = "用户名长度必须在3-20个字符之间")
     private String username;
     
     @Schema(description = "真实姓名")
